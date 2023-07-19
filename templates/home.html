@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+
+{% block title %}Hello World with Login Button{% endblock %}
+
+{% block content %}
+    <div class="container">
+        <h1>Hello World</h1>
+        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+    </div>
+{% endblock %}

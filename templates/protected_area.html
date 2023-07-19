@@ -1,0 +1,10 @@
+{% extends "layout.html" %}
+
+{% block title %}Protected Area{% endblock %}
+
+{% block content %}
+    <div class="container mt-4">
+        <h1>Hello {{ session['name'] }}!</h1>
+        <a href="/signout" class="btn btn-primary">Logout</a>
+    </div>
+{% endblock %}
