@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PlantOnDemand</title>
+    <style>
+    
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f0f0f0;
+            color: #333;
+        }
+
+
+        main {
+            text-align: center;
+            margin-top: 30px;
+        }
+
+  
+        #plant {
+            width: 150px;
+            height: 150px;
+            background-color: green;
+            border-radius: 50%;
+            margin: 20px auto;
+        }
+
+        #waterButton, #sunlightButton, #fertilizeButton {
+            padding: 10px 20px;
+            font-size: 16px;
+            background-color: #007bff;
+            color: #fff;
+            cursor: pointer;
+            margin: 5px;
+        }
+
+        #health {
+            font-size: 24px;
+            font-weight: bold;
+        }
+        
+
+        #healthBarContainer {
+            width: 100%;
+            height: 30px;
+            background-color: #ccc;
+            border-radius: 5px;
+            margin-top: 20px;
+            overflow: hidden;
+        }
+
+        #healthBar {
+            width: 100%;
+            height: 100%;
+            background-color: green;
+        }
+
+    </style>
+</head>
+<body>
+    <header>
+        <h1>PlantsOnDemand</h1>
+    </header>
+    <main>
+        <div class="container">
+            <div id="plant"></div>
+            <button id="waterButton" onclick="waterPlant()">Water</button>
+            <button id="sunlightButton" onclick="giveSunlight()">Sunlight</button>
+            <button id="fertilizeButton" onclick="giveFertilizer()">Fertilize</button>
+            <button id="playAgainButton" onclick="playAgain()">Play Again</button>
+            <p id="health">Plant Health: 100%</p>
+            <p>Day: <span id="dayCount">1</span></p>
+                    <p id="message"></p>  
+                    <div id="healthBarContainer">
+                <div id="healthBar"></div>
+                 
+            </div>
+        </div>
+    </main>
+  
+    <script>
+
+
+        let plantHealth = 100;
+        let dayCount = 1; 
+        let hasReceivedSunlight = false;
+        let hasReceivedFertilizer = false;
+
+        function updatePlantHealth() {
+            document.getElementById('health').innerText = `Plant Health: ${plantHealth}%`;
+            document.getElementById('healthBar').style.width = `${plantHealth}%`;
+
+             if (plantHealth <= 67 && dayCount === 1) {
+    dayCount = 2;
+    document.getElementById('dayCount').textContent = dayCount;
+  } else if (plantHealth <= 34 && dayCount === 2) {
+    dayCount = 3;
+    document.getElementById('dayCount').textContent = dayCount;
+    document.getElementById('message').textContent = 'Day 3: Please water your plant!';
+  }
+
+
+            if (plantHealth <= 0) {
+                document.getElementById('plant').style.backgroundColor = 'gray';
+                document.getElementById('waterButton').disabled = true;
+                document.getElementById('sunlightButton').disabled = true;
+                document.getElementById('fertilizeButton').disabled = true;
+                document.getElementById('sunlightButton').hidden = true;
+                document.getElementById('fertilizeButton').hidden = true;
+                document.getElementById('waterButton').innerText = 'Plant Withered';
+                document.getElementById('message').hidden = true;
+            }
+        }
+
+  function updateDayCount(){
+    dayCount = 1;
+    document.getElementById('dayCount').textContent = dayCount;
+    document.getElementById('message').textContent = '';
+  }
+
+   function waterPlant() {
+    const requestData = {
+        plant_health: plantHealth
+    };
+
+    fetch('/api/water', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        plantHealth = data.plant_health;
+        updatePlantHealth();
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function giveSunlight() {
+    const requestData = {
+        plant_health: plantHealth
+    };
+
+    fetch('/api/sunlight', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(requestData)
+    })
+    .then(response => response.json())
+    .then(data => {
+        plantHealth = data.plant_health;
+        updatePlantHealth();
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+function giveFertilizer() {
+    const requestData = {
+        plant_health: plantHealth
+    };
+
+    fetch('/api/fertilize', {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json' // Set the correct content type to JSON
+        },
+        body: JSON.stringify(requestData) // Convert the data to JSON format
+    })
+    .then(response => response.json())
+    .then(data => {
+        plantHealth = data.plant_health;
+        updatePlantHealth();
+    })
+    .catch(error => console.error('Error:', error));
+}
+
+
+        function checkPlantHealth() {
+            if (hasReceivedSunlight && hasReceivedFertilizer) {
+                plantHealth += 0;
+                hasReceivedSunlight = false;
+                hasReceivedFertilizer = false;
+                updatePlantHealth();
+            }
+        }
+        function playAgain() {
+
+            plantHealth = 100;
+            dayCount = 1;
+
+            document.getElementById('waterButton').disabled = false;
+            document.getElementById('sunlightButton').disabled = false;
+            document.getElementById('fertilizeButton').disabled = false;
+            document.getElementById('waterButton').innerText = 'Water';
+            document.getElementById('sunlightButton').hidden = false;
+            document.getElementById('fertilizeButton').hidden = false;
+            document.getElementById('plant').style.backgroundColor = 'green';
+
+            updatePlantHealth();
+            updateDayCount();
+       
+        }
+
+        setInterval(function() {
+            if (plantHealth > 0) {
+                plantHealth -= 5;
+                updatePlantHealth();
+            }
+        }, 500); 
+
+    </script>
+</body>
+</html>
