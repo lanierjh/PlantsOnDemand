@@ -68,9 +68,7 @@ def callback():
     # In this case, Google's OAuth 2.0 endpoint is where the user is redirected
     # after granting permission to your application.
 
-    # Override the OAUTHLIB_INSECURE_TRANSPORT variable for local development
-    # this is a quick fix to it for only local development
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    
 
     # Fetch the access token from Google after the user grants permission
     flow.fetch_token(authorization_response=request.url)
@@ -121,10 +119,31 @@ def home():
 def protected_area():
     return render_template('protected_area.html')
 
-@app.route('/plant_search')
+@app.route('/plant_search', methods=['GET', 'POST'])
 def plant_search():
-    # Render the plant_search.html template for the plant search page
+    if request.method == 'POST':
+        # Get the user's search query from the form data
+        plant_name = request.form.get('plant_name')
+        care_level = request.form.get('care_level')
+
+        # For demonstration purposes, let's print the search parameters.
+        if plant_name:
+            print('Search by Name:', plant_name)
+        if care_level:
+            print('Search by Care Level:', care_level)
+
+    
+        # we'll put our json into a list of plants as search_results.
+        search_results = [
+            {plant_name: care_level}
+        ]
+
+        # Return the search_results to the template for displaying the results.
+        return render_template('plant_search.html', search_results=search_results)
+
+    # If it's a GET request, we render the plant_search.html template.
     return render_template('plant_search.html')
+
 
 @app.route('/user_profile')
 def user_profile():
@@ -143,7 +162,7 @@ def plant_simulation():
 
 @app.route('/plant_recommendations')
 def plant_recommendations():
-    return render_template('plant_recommendations')
+    return render_template('plant_recommendations.html')
 
 @app.route('/error')
 def error():
@@ -153,6 +172,10 @@ def error():
 
 
 if __name__ == "__main__":
+    # Override the OAUTHLIB_INSECURE_TRANSPORT variable for local development
+    # this is a quick fix to it for only local development
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    
     # Setting the app's secret key for session management: might have questions about the security of this procedure?
     app.secret_key = "a16d378de074a6f025a0015ebbf8c490dbfa6e2545436920823c6248c2f53256"
     # Running the Flask application in debug mode
