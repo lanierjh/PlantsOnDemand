@@ -134,7 +134,12 @@ def plant_search():
         result = response.json()
         newRes = result['data']
         index = 0
-
+        
+        #test the output in terminal 
+        print(result)
+        print("/n"*3)
+        print(newRes)
+        
         while index < len(newRes):
             id = newRes[index]['id']
             #print(id)
@@ -159,7 +164,7 @@ def plant_search():
             index += 1
         #return render_template('plant_search.html', name=output)
         
-        
+        print(output)
         # For demonstration purposes, let's print the search parameters.
         if plant_name:
             print('Search by Name:', plant_name)

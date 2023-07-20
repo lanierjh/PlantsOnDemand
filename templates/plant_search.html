@@ -31,8 +31,17 @@
         <h2>Search Results:</h2>
         <div class="row" id="search_results">
             <!-- Loop through the search results and display each item -->
+            <!--Later I would like to make the cards the same size across-->
             {% if name %}
                 {% set results = name.split('\n') %}
+                <!--
+                    Note in code review: 
+                    The first arg (0) is the start val of sequence.
+                    The second arg(results|length) represents the end val of the sequence. 
+                    The results|length part uses the length filter to determine the num of items in the results list. 
+                    Thus the loop will run from 0 to the length of the results list.
+                    The third arg (5) is the step val, the loop will increment the index variable by 5 in each iteration.
+                -->
                 {% for index in range(0, results|length, 5) %}
                     <div class="col-md-4">
                         <div class="card mb-4">
@@ -44,6 +53,8 @@
                                 {% else %}
                                     <p>No image available</p>
                                 {% endif %}
+                                <!--button to add the plants id to the profile, functionality to follow-->
+                                <button type="submit" class="btn btn-primary">Add</button>
                             </div>
                         </div>
                     </div>
