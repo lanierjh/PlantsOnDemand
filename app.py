@@ -141,10 +141,15 @@ def plant_simulation():
     # Render the plant_simulation.html template for the plant simulation page
     return render_template('plant_simulation.html')
 
+@app.route('/plant_recommendations')
+def plant_recommendations():
+    return render_template('plant_recommendations')
+
 @app.route('/error')
 def error():
     # Render the error.html template for the error page
     return render_template('error.html')
+
 
 
 if __name__ == "__main__":
