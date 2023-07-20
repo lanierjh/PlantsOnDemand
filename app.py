@@ -121,11 +121,45 @@ def protected_area():
 
 @app.route('/plant_search', methods=['GET', 'POST'])
 def plant_search():
+    output = ''
     if request.method == 'POST':
+        
         # Get the user's search query from the form data
         plant_name = request.form.get('plant_name')
         care_level = request.form.get('care_level')
+        
+        # response 
+        response = requests.get('https://perenual.com/api/species-list?key=sk-L9aC64b73122e37dc1596&q='+plant_name)
 
+        result = response.json()
+        newRes = result['data']
+        index = 0
+
+        while index < len(newRes):
+            id = newRes[index]['id']
+            #print(id)
+            idStr = str(id)
+            output += idStr + '\n'
+            #print(newRes[index]['common_name'])
+            output += newRes[index]['common_name']
+            output += '\n'
+            #print(newRes[index]['scientific_name'])
+            output += str(newRes[index]['scientific_name'])
+            output += '\n'
+            picture = newRes[index]['default_image']
+            if picture == None:
+                #print("no_url")
+                output += 'no url' + '\n'
+            else:
+                #print(picture['original_url'])
+                output += picture['original_url']
+                output += '\n'
+            #print()
+            output += '\n'
+            index += 1
+        #return render_template('plant_search.html', name=output)
+        
+        
         # For demonstration purposes, let's print the search parameters.
         if plant_name:
             print('Search by Name:', plant_name)
@@ -139,10 +173,10 @@ def plant_search():
         ]
 
         # Return the search_results to the template for displaying the results.
-        return render_template('plant_search.html', search_results=search_results)
+        return render_template('plant_search.html', search_results=search_results, name=output)
 
     # If it's a GET request, we render the plant_search.html template.
-    return render_template('plant_search.html')
+    return render_template('plant_search.html', name=output)
 
 
 @app.route('/user_profile')
@@ -162,7 +196,50 @@ def plant_simulation():
 
 @app.route('/plant_recommendations')
 def plant_recommendations():
-    return render_template('plant_recommendations.html')
+    # Get the user's search query from the form data
+        plant_name = request.form.get('plant_name')
+        care_level = request.form.get('care_level')
+        
+        # response 
+        response = requests.get('https://perenual.com/api/species-list?key=sk-L9aC64b73122e37dc1596&q='+plant_name)
+
+        result = response.json()
+        newRes = result['data']
+        index = 0
+        output = ''
+
+        while index < len(newRes):
+            id = newRes[index]['id']
+            #print(id)
+            idStr = str(id)
+            output += idStr + '\n'
+            #print(newRes[index]['common_name'])
+            output += newRes[index]['common_name']
+            output += '\n'
+            #print(newRes[index]['scientific_name'])
+            output += str(newRes[index]['scientific_name'])
+            output += '\n'
+            picture = newRes[index]['default_image']
+            if picture == None:
+                #print("no_url")
+                output += 'no url' + '\n'
+            else:
+                #print(picture['original_url'])
+                output += picture['original_url']
+                output += '\n'
+            #print()
+            output += '\n'
+            index += 1
+        #return render_template('plant_search.html', name=output)
+        
+        
+        # For demonstration purposes, let's print the search parameters
+
+    
+        # we'll put our json into a list of plants as search_results.
+
+        # Return the search_results to the template for displaying the results.
+        return render_template('plant_search.html', name=output)
 
 @app.route('/error')
 def error():

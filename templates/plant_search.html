@@ -6,7 +6,8 @@
 
 {% block content %}
     <div class="container mt-5">
-        <!--These forms -->
+        <h2>Plant Search:</h2>
+        <!-- Plant search form -->
         <form action="/plant_search" method="POST">
             <div class="mb-3">
                 <label for="plant_name" class="form-label">Plant Name:</label>
@@ -29,8 +30,25 @@
     <div class="container mt-5">
         <h2>Search Results:</h2>
         <div class="row" id="search_results">
-            <!-- Results will be dynamically added here -->
-            <!-- Wanna add the small little boxes with each output result returned-->
+            <!-- Loop through the search results and display each item -->
+            {% if name %}
+                {% set results = name.split('\n') %}
+                {% for index in range(0, results|length, 5) %}
+                    <div class="col-md-4">
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <h5 class="card-title">{{ results[index+1] }}</h5>
+                                <p class="card-text">Scientific Name: {{ results[index+2] }}</p>
+                                {% if results[index+3] != 'no url' %}
+                                    <img src="{{ results[index+3] }}" class="card-img-top" alt="Plant Image">
+                                {% else %}
+                                    <p>No image available</p>
+                                {% endif %}
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
         </div>
     </div>
 {% endblock %}
