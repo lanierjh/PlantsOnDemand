@@ -121,6 +121,31 @@ def home():
 def protected_area():
     return render_template('protected_area.html')
 
+@app.route('/plant_search')
+def plant_search():
+    # Render the plant_search.html template for the plant search page
+    return render_template('plant_search.html')
+
+@app.route('/user_profile')
+def user_profile():
+    # Render the user_profile.html template for the user profile page
+    return render_template('user_profile.html')
+
+@app.route('/plant_diary')
+def plant_diary():
+    # Render the plant_diary.html template for the plant diary page
+    return render_template('plant_diary.html')
+
+@app.route('/plant_simulation')
+def plant_simulation():
+    # Render the plant_simulation.html template for the plant simulation page
+    return render_template('plant_simulation.html')
+
+@app.route('/error')
+def error():
+    # Render the error.html template for the error page
+    return render_template('error.html')
+
 
 if __name__ == "__main__":
     # Setting the app's secret key for session management: might have questions about the security of this procedure?
