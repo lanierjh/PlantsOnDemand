@@ -100,10 +100,32 @@ def home():
 @login_is_required
 def protected_area():
     return render_template('protected_area.html')
-@app.route('/plant_search')
+
+@app.route('/plant_search', methods=['GET', 'POST'])
 def plant_search():
-    # Render the plant_search.html template for the plant search page
+    if request.method == 'POST':
+        # Get the user's search query from the form data
+        plant_name = request.form.get('plant_name')
+        care_level = request.form.get('care_level')
+
+        # For demonstration purposes, let's print the search parameters.
+        if plant_name:
+            print('Search by Name:', plant_name)
+        if care_level:
+            print('Search by Care Level:', care_level)
+
+    
+        # we'll put our json into a list of plants as search_results.
+        search_results = [
+            {plant_name: care_level}
+        ]
+
+        # Return the search_results to the template for displaying the results.
+        return render_template('plant_search.html', search_results=search_results)
+
+    # If it's a GET request, we render the plant_search.html template.
     return render_template('plant_search.html')
+
 @app.route('/plant_recommendations')
 def plant_recommendations():
     plant = request.form['name']
@@ -136,7 +158,7 @@ def plant_recommendations():
         #print()
         output += '\n'
         index += 1
-    return render_template('plant_search.html', name=output)
+    return render_template('plant_recommendations.html', name=output)
 @app.route('/user_profile')
 def user_profile():
     # Render the user_profile.html template for the user profile page
