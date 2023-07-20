@@ -153,6 +153,9 @@ def error():
 
 
 if __name__ == "__main__":
+    # Set the OAUTHLIB_INSECURE_TRANSPORT environment variable for local development
+    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    
     # Setting the app's secret key for session management: might have questions about the security of this procedure?
     app.secret_key = "a16d378de074a6f025a0015ebbf8c490dbfa6e2545436920823c6248c2f53256"
     # Running the Flask application in debug mode
