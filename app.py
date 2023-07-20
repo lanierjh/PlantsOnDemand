@@ -13,7 +13,6 @@ import os
 import pathlib
 import requests
 from cachecontrol import CacheControl
-
 import requests
 from pip._vendor import cachecontrol
 import google.auth.transport.requests
@@ -50,8 +49,13 @@ def login_is_required(function):
             return function()
     return wrapper
 
+# Route for displaying the login page
+@app.route("/login_page")
+def login_page():
+    return render_template("login.html")
+
 # Route for initiating the login process with Google OAuth
-@app.route("/login")
+@app.route("/login/google")
 def login():
     authorization_url, state = flow.authorization_url()
     session["state"] = state
@@ -100,6 +104,7 @@ def callback():
     return redirect("/protected_area")
 
 # Route to clear the local session for the user (log out)
+# just redirects to home page 
 @app.route("/signout")
 def logout():
     session.clear()
@@ -110,11 +115,12 @@ def logout():
 def home():
     return render_template('home.html')
 
-# Protected area route that requires login to access
+# Route for displaying the protected area after successful login
 @app.route("/protected_area")
 @login_is_required
 def protected_area():
     return render_template('protected_area.html')
+
 
 if __name__ == "__main__":
     # Setting the app's secret key for session management: might have questions about the security of this procedure?

@@ -1,10 +1,21 @@
+<!-- home.html -->
 {% extends "layout.html" %}
 
-{% block title %}Hello World with Login Button{% endblock %}
+{% block title %}Plant Care App{% endblock %}
 
 {% block content %}
     <div class="container">
-        <h1>Hello World</h1>
-        <a href="{{ url_for('login') }}" class="btn btn-primary">Login</a>
+        {% if session['google_id'] %}
+            <!-- Show this content if the user is signed in -->
+            <h1>Hello {{ session['name'] }}!</h1>
+            <p>Welcome to your dashboard. You can now access the following pages:</p>
+            
+            <!--<a href="/signout" class="btn btn-primary">Logout</a>-->
+        {% else %}
+            <!-- Show this content if the user is not signed in -->
+            <h1>Welcome to the Plant Care App</h1>
+            <p>Please sign in to access all the features.</p>
+            <!--<a href="{{ url_for('login_page') }}" class="btn btn-primary">Login with Google</a>-->
+        {% endif %}
     </div>
 {% endblock %}
