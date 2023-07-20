@@ -3,7 +3,7 @@ import os
 import pathlib
 import flask
 from flask import Flask, redirect, url_for, request, render_template, session, abort
-import secrets 
+import secrets
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
 from google.auth.transport import requests
@@ -33,8 +33,8 @@ client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret
 # Creating a Flow instance for OAuth 2.0 authentication with Google
 flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
-    scopes=["https://www.googleapis.com/auth/userinfo.profile", 
-            "https://www.googleapis.com/auth/userinfo.email", 
+    scopes=["https://www.googleapis.com/auth/userinfo.profile",
+            "https://www.googleapis.com/auth/userinfo.email",
             "openid"],
     redirect_uri="http://127.0.0.1:5000/callback"
 )
@@ -70,7 +70,7 @@ def callback():
 
     # Override the OAUTHLIB_INSECURE_TRANSPORT variable for local development
     # this is a quick fix to it for only local development
-    os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
+    #os.environ['OAUTHLIB_INSECURE_TRANSPORT'] = '1'
 
     # Fetch the access token from Google after the user grants permission
     flow.fetch_token(authorization_response=request.url)
@@ -104,7 +104,7 @@ def callback():
     return redirect("/protected_area")
 
 # Route to clear the local session for the user (log out)
-# just redirects to home page 
+# just redirects to home page
 @app.route("/signout")
 def logout():
     session.clear()
