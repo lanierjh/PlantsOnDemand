@@ -9,18 +9,20 @@
         <h2>Plant Search:</h2>
         <!-- Plant search form -->
         <form action="/plant_search" method="POST">
-            <div class="mb-3">
-                <label for="plant_name" class="form-label">Plant Name:</label>
-                <input type="text" name="plant_name" id="plant_name" class="form-control">
-            </div>
-            <div class="mb-3">
-                <label for="care_level" class="form-label">Care Level:</label>
-                <select name="care_level" id="care_level" class="form-select">
-                    <option value="beginner">Beginner</option>
-                    <option value="intermediate">Intermediate</option>
-                    <option value="advanced">Advanced</option>
-                    <option value="none">None</option>
-                </select>
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="plant_name" class="form-label">Plant Name:</label>
+                    <input type="text" name="plant_name" id="plant_name" class="form-control">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="care_level" class="form-label">Care Level:</label>
+                    <select name="care_level" id="care_level" class="form-select">
+                        <option value="beginner">Beginner</option>
+                        <option value="intermediate">Intermediate</option>
+                        <option value="advanced">Advanced</option>
+                        <option value="none">None</option>
+                    </select>
+                </div>
             </div>
             <button type="submit" class="btn btn-primary">Search</button>
         </form>
@@ -31,20 +33,21 @@
         <h2>Search Results:</h2>
         <div class="row" id="search_results">
             <!-- Loop through the search results and display each item -->
-            <!--Later I would like to make the cards the same size across-->
+            <!-- Later I would like to make the cards the same size across -->
             {% if name %}
                 {% set results = name.split('\n') %}
                 <!--
                     Note in code review: 
-                    The first arg (0) is the start val of sequence.
+                    The first arg (0) is the start val of the sequence.
                     The second arg(results|length) represents the end val of the sequence. 
                     The results|length part uses the length filter to determine the num of items in the results list. 
                     Thus the loop will run from 0 to the length of the results list.
                     The third arg (5) is the step val, the loop will increment the index variable by 5 in each iteration.
                 -->
+                <p> results</p>
                 {% for index in range(0, results|length, 5) %}
-                    <div class="col-md-4">
-                        <div class="card mb-4">
+                    <div class="col-md-4 mb-4">
+                        <div class="card h-100">
                             <div class="card-body">
                                 <h5 class="card-title">{{ results[index+1] }}</h5>
                                 <p class="card-text">Scientific Name: {{ results[index+2] }}</p>
@@ -53,8 +56,20 @@
                                 {% else %}
                                     <p>No image available</p>
                                 {% endif %}
-                                <!--button to add the plants id to the profile, functionality to follow-->
-                                <button type="submit" class="btn btn-primary">Add</button>
+                                <!-- button to add the plant's id to the profile, functionality to follow -->
+                                <!-- button being a form will help submit the form to the add_plant route 
+                                    which we'll create in the -->
+                                <form action="/add_plant" method="POST">
+                                    {% set plant_id = results[index] %}
+                                    {% if plant_id in session.saved_plants %}
+                                        <!-- we want to disable the button -->
+                                        <button type="button" class="btn btn-success" disabled>Added</button>
+                                    {% else %}
+                                        <input type="hidden" name="plant_id" value="{{ plant_id }}">
+                                        <!-- To come: once you click add change to added and disable the button -->
+                                        <button type="submit" class="btn btn-primary">Add</button>
+                                    {% endif %}
+                                </form>
                             </div>
                         </div>
                     </div>

@@ -22,7 +22,7 @@ app = Flask(__name__)
 
 # Generating a secret key using the secrets module (not currently used in the code)
 secret_key = secrets.token_hex(32)
-print(secret_key)
+#print(secret_key)
 
 # Google Client ID obtained from the Google Developer Console
 GOOGLE_CLIENT_ID = "138083707001-9rt68g745qcbjuhisjumsf6hnle2111s.apps.googleusercontent.com"
@@ -46,8 +46,11 @@ def login_is_required(function):
         if "google_id" not in session:
             return abort(401)  # Authorization required
         else:
-            return function()
+            return function(*args, **kwargs)  # Pass the arguments to the decorated function
+    # Rename the endpoint to avoid conflicts unlike original
+    wrapper.__name__ = f"{function.__name__}_decorated"
     return wrapper
+
 
 # Route for displaying the login page
 @app.route("/login_page")
@@ -60,6 +63,26 @@ def login():
     authorization_url, state = flow.authorization_url()
     session["state"] = state
     return redirect(authorization_url)
+
+@app.route('/add_plant', methods=["POST"])
+@login_is_required
+def add_plant():
+    #Get plant ID from request data
+    plant_id = request.form.get('plant_id')
+    
+    #Here, we'll try to use a session variable to simulate adding 
+    # the plant to the user's profile as a test
+    #make sure this plant id is legit
+    if plant_id:
+        if 'saved_plants' not in session:
+            session['saved_plants'] = []
+            
+        # check if if plant is already in users saved plants 
+        if plant_id not in session['saved_plants']:
+            session['saved_plants'].append(plant_id)
+            
+    return redirect(url_for('plant_search'))
+
 
 @app.route("/callback")
 def callback():
@@ -115,7 +138,7 @@ def home():
 
 # Route for displaying the protected area after successful login
 @app.route("/protected_area")
-@login_is_required
+#@login_is_required
 def protected_area():
     return render_template('protected_area.html')
 
@@ -128,17 +151,19 @@ def plant_search():
         plant_name = request.form.get('plant_name')
         care_level = request.form.get('care_level')
         
+        
         # response 
-        response = requests.get('https://perenual.com/api/species-list?key=sk-L9aC64b73122e37dc1596&q='+plant_name)
+        response = requests.get('https://perenual.com/api/species-list?key=sk-nhoF64b59f3266ff91582&q='+plant_name)
 
         result = response.json()
         newRes = result['data']
         index = 0
         
         #test the output in terminal 
-        print(result)
-        print("/n"*3)
-        print(newRes)
+        #print("THIS IS THE RESULT: ",result)
+        #print("THIS IS THE DATA SECTION WE WANT FROM RESULT", newRes)
+        #print("/n"*3)
+        #print(newRes)
         
         while index < len(newRes):
             id = newRes[index]['id']
@@ -166,6 +191,7 @@ def plant_search():
         #return render_template('plant_search.html', name=output)
         
         print(output)
+        print("/n".split(output))
         # For demonstration purposes, let's print the search parameters.
         if plant_name:
             print('Search by Name:', plant_name)
@@ -207,7 +233,7 @@ def plant_recommendations():
         care_level = request.form.get('care_level')
         
         # response 
-        response = requests.get('https://perenual.com/api/species-list?key=sk-L9aC64b73122e37dc1596&q='+plant_name)
+        response = requests.get('https://perenual.com/api/species-list?key=sk-nhoF64b59f3266ff91582&q='+plant_name)
 
         result = response.json()
         newRes = result['data']
@@ -237,13 +263,6 @@ def plant_recommendations():
             #print()
             output += '\n'
             index += 1
-        #return render_template('plant_search.html', name=output)
-        
-        
-        # For demonstration purposes, let's print the search parameters
-
-    
-        # we'll put our json into a list of plants as search_results.
 
         # Return the search_results to the template for displaying the results.
         return render_template('plant_search.html', name=output)
