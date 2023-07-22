@@ -8,27 +8,16 @@
     <div class="container mt-5">
         <h2>Profile</h2>
         <!-- Display user-specific information here -->
-        
         <h3>Welcome, {{ session['name'] }}!</h3>
-        <!--<p>Email: {{ session['email_address'] }}</p>
-        <p>Location: {{ session['location'] }}</p>-->
 
         <!-- Display user's saved plants -->
         <h4>Saved Plants:</h4>
         <div class="row" id="saved_plants">
             <!-- Loop through the user's saved plant IDs and display each item -->
             {% for plant_id in session['saved_plants'] %}
-                <div class="col-md-4">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <h5 class="card-title">Plant ID: {{ plant_id }}</h5>
-                            <p class="card-text"> Scientific Name</p>
-                            <p class="card-text">Placeholder for Plant Image</p>
-                            <button type="button" class="btn btn-success" disabled>Added</button>
-                            <!-- You can add functionality here to remove the plant from the user's profile if needed -->
-                        </div>
-                    </div>
-                </div>
+                
+                {{plant_id}}
+        
             {% endfor %}
         </div>
     </div>
