@@ -49,8 +49,9 @@
                                         {% else %}
                                             <p>No image available</p>
                                         {% endif %}
+                                        <!--current problem, whenever, I click this it returns only the first result-->
                                         <input name="plant_id" value="{{ results[index] }}" type="hidden">
-                                        <button type="submit" value="{{results[index]}}" class="btn btn-primary">Add</button>
+                                        <button for="plant_id" type="submit" value="{{results[index]}}" class="btn btn-primary">Add</button>
                                     </div>
                                 </div>
                             </div>

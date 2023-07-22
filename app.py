@@ -35,13 +35,64 @@ class User(db.Model):
     email = db.Column(db.String(250), unique=True, nullable=False)
     picture = db.Column(db.String(250), unique=True, nullable=False)
     googleId = db.Column(db.String(255), unique=True, nullable=False)
-
-class users_plants(db.Model):
+    # a way for us to create a relationship btwn the user and their many plants
+    plants = db.relationship('UsersPlants', back_populates='user')
+    
+class UsersPlants(db.Model):
+    # make sure we get a value at least for common name and scientific name 
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
-    name = db.Column(db.String(250), unique=True, nullable=False)
-    email = db.Column(db.String(250), unique=True, nullable=False)
-    picture = db.Column(db.String(250), unique=True, nullable=False)
-    googleId = db.Column(db.String(255), unique=True, nullable=False)
+    common_name = db.Column(db.String(250), nullable=False)
+    scientific_name = db.Column(db.Text, nullable=False)
+    other_names = db.Column(db.Text)
+    family = db.Column(db.String(100))
+    origin = db.Column(db.Text)
+    # like - is it a tree, ..etc 
+    plant_type = db.Column(db.String(100))
+    # will tell u height alone
+    dimension = db.Column(db.String(100))
+    #tell you type of dimension and max and min val
+    # hv to flesh this out more extract min+unitand max +unit
+    dimensions = db.Column(db.Text)
+    cycle = db.Column(db.String(100))
+    watering = db.Column(db.String(100))
+    depth_water_requirement = db.Column(db.Text)
+    volume_water_requirement = db.Column(db.Text)
+    watering_period = db.Column(db.String(100))
+    watering_general_benchmark = db.Column(db.String(100))
+    default_image_url = db.Column(db.String(250))
+    propagation = db.Column(db.String(250))
+    maintenance = db.Column(db.String(100))
+    care_level = db.Column(db.String(100))
+    care_guides = db.Column(db.String(250))
+    pruning_month = db.Column(db.String(250))
+    pruning_count = db.Column(db.Integer)
+    seeds = db.Column(db.Integer)
+    flowering_season = db.Column(db.String(100))
+    flowering_color = db.Column(db.String(100))
+    cones = db.Column(db.Boolean)
+    fruits = db.Column(db.Boolean)
+    edible_fruit = db.Column(db.Boolean)
+    edible_leaf = db.Column(db.Boolean)
+    medicinal = db.Column(db.Boolean)
+    poisonous_to_humans = db.Column(db.Boolean)
+    poisonous_to_pets = db.Column(db.Boolean)
+    description = db.Column(db.Text)
+    hardiness_min = db.Column(db.String(10))
+    hardiness_max = db.Column(db.String(10))
+    hardiness_map = db.Column(db.Text)
+    # Soil info
+    soil = db.Column(db.Text)  # If there are multiple soil types, we can store them as a string
+    
+    #this is a very good dataset, if we wanted to expand on this we could use the fields abv
+    # as somewhat of a filter
+    
+
+    # way for us to connect to the User model:
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', back_populates='plants')
+
+    
+    
 
 
 
@@ -156,7 +207,7 @@ def callback():
     session["name"] = id_info.get("name")
     session["email"] = id_info.get("email")
     session["picture"] = id_info.get("picture") 
-    print(id_info)
+    #print(id_info)
     #session["email_adress"] = id_info.get("e")
     user = User.query.filter_by(googleId=session["google_id"]).first()
     # Jackson u were right it's !user cz user alone means that there is something in user, I apologize!!!
@@ -220,50 +271,47 @@ def plant_search():
         result = response.json()
         newRes = result['data']
         index = 0
-       
-        #test the output in terminal
-        #print("THIS IS THE RESULT: ",result)
-        #print("THIS IS THE DATA SECTION WE WANT FROM RESULT", newRes)
-        #print("/n"*3)
-        #print(newRes)
+        session['search results'] = []
        
         while index < len(newRes):
             id = newRes[index]['id']
             idStr = str(id)
+            out_id = ''
             if care_level != 'N/A':
                 levelResponse = requests.get('https://perenual.com/api/species/details/'+idStr+'?key=sk-x2Xs64bb0058c865e1636')
                 levelResult = levelResponse.json()
-            # print(levelResult['care_level'])
-            # print(care_level, 'ojnslj')
-            # print(care_level==levelResult['care_level'])
+            
                 if care_level == levelResult["care_level"]:
-                    print(newRes[index]['common_name'])
+                    # addition: 
+                    out_id = idStr
                     output += idStr + '\n'
-                    #print(newRes[index]['common_name'])
+                    #addition
+                    common_name  =  newRes[index]['common_name']
                     output += newRes[index]['common_name']
                     output += '\n'
-                    #print(newRes[index]['scientific_name'])
                     output += str(newRes[index]['scientific_name'])
+                    #addition
+                    scientific_names = newRes[index]['scientific_name']
                     output += '\n'
                     picture = newRes[index]['default_image']
                     if picture == None:
-                        #print("no_url")
                         output += 'no url' + '\n'
                     else:
-                        #print(picture['original_url'])
                         output += picture['original_url']
                         output += '\n'
                     #print()
                     output += '\n'
             else:
-                print(newRes[index]['common_name'])
+                # here we will acquire all the data possible for 
                 output += idStr + '\n'
-                #print(newRes[index]['common_name'])
                 output += newRes[index]['common_name']
+                #addition
+                common_name  =  newRes[index]['common_name']
                 output += '\n'
-                #print(newRes[index]['scientific_name'])
                 output += str(newRes[index]['scientific_name'])
                 output += '\n'
+                #addition
+                scientific_names = newRes[index]['scientific_name']
                 picture = newRes[index]['default_image']
                 if picture == None:
                     #print("no_url")
@@ -277,16 +325,16 @@ def plant_search():
             index += 1
         #return render_template('plant_search.html', name=output)
        
-        print(output)
+        print(output2)
         print("/n".split(output))
         # For demonstration purposes, let's print the search parameters.
-        if plant_name:
-            print('Search by Name:', plant_name)
-        if care_level:
-            print('Search by Care Level:', care_level)
+        # if plant_name:
+        #     print('Search by Name:', plant_name)
+        # if care_level:
+        #     print('Search by Care Level:', care_level)
 
 
-   
+        #output2 = 
         # we'll put our json into a list of plants as search_results.
         search_results = [
             {plant_name: care_level}
