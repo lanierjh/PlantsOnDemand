@@ -16,10 +16,22 @@ from cachecontrol import CacheControl
 import requests
 from pip._vendor import cachecontrol
 import google.auth.transport.requests
+from sqlalchemy import create_engine
+from sqlalchemy.orm import sessionmaker
+from flask_sqlalchemy import SQLAlchemy
 
 
 # Creating a Flask application instance
 app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///PlantsOnDemand.db'
+db = SQLAlchemy(app)
+
+class User(db.Model):
+    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    name = db.Column(db.String(250), unique=True, nullable=False)
+    email = db.Column(db.String(250), unique=True, nullable=False)
+    picture = db.Column(db.String(250), unique=True, nullable=False)
+    googleId = db.Column(db.String(255), unique=True, nullable=False)
 
 
 # Generating a secret key using the secrets module (not currently used in the code)
@@ -34,6 +46,7 @@ GOOGLE_CLIENT_ID = "138083707001-9rt68g745qcbjuhisjumsf6hnle2111s.apps.googleuse
 # Constructing the path for the 'client_secret.json' file using the pathlib module
 client_secrets_file = os.path.join(pathlib.Path(__file__).parent, "client_secret.json")
 
+    
 
 # Creating a Flow instance for OAuth 2.0 authentication with Google
 flow = Flow.from_client_secrets_file(
@@ -137,8 +150,14 @@ def callback():
     # Save user information in the session for future use
     session["google_id"] = id_info.get("sub")
     session["name"] = id_info.get("name")
+    session["email"] = id_info.get("email")
+    session["picture"] = id_info.get("picture") 
     print(id_info)
     #session["email_adress"] = id_info.get("e")
+    user = User.query.filter_by(googleId=session["google_id"]).first()
+    if user: 
+        print("nasklksanflacsknlkasnaksnaskasnlnasflksa")
+        #new_user = User()
 
 
     # Redirect to the protected area after successful authentication
@@ -336,7 +355,8 @@ def error():
 
 
 
-
+with app.app_context():
+    db.create_all()
 
 
 if __name__ == "__main__":
