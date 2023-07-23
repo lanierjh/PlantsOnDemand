@@ -1,65 +1,66 @@
 {% extends "layout.html" %}
 
 {% block title %}
-    Plant Search
+Plant Search 2
 {% endblock %}
 
 {% block content %}
-    <div class="container mt-5">
-        <h2>Plant Search:</h2>
-        <!-- Plant search form -->
+    <div class="container mt-5"> 
+        <h2 class="mb-3"> Plant Search: </h2>
         <form action="/plant_search" method="POST">
             <div class="row">
-                <div class="col-md-6 mb-3">
-                    <label for="plant_name" class="form-label">Plant Name:</label>
-                    <input type="text" name="plant_name" id="plant_name" class="form-control">
+                <div class="form-group">
+                    <label for="plant_name" class="form-label"> Plant Name: </label>
+                    <input type="text" id="plant_name" name="plant_name" class="form-control" required>
                 </div>
-                <div class="col-md-6 mb-3">
-                    <label for="care_level" class="form-label">Care Level:</label>
+                <div>
+                    <label for="care_level" class="form-label"> Care Level: </label>
                     <select name="care_level" id="care_level" class="form-select">
-                        <option value="Easy">Beginner</option>
+                        <option value="N/A">None</option> 
+                        <option value="Easy">Easy</option>
                         <option value="Moderate">Moderate</option>
-                        <option value="Medium">Intermediate</option>
+                        <option value="Medium">Medium</option>
                         <option value="Hard">Advanced</option>
-                        <option value="N/A">None</option>
                     </select>
                 </div>
             </div>
-            <button type="submit" class="btn btn-primary">Search</button>
+            <input type="submit" value="Search" class="btn btn-primary mt-3">
         </form>
-    </div>
-    <div class='container mt-4'> 
-    <!-- Output container to display search results -->
-    <div class="container mt-5">
-        <h2>Plant Search Results:</h2>
-        <div class="row" id="search_results">
-            <!-- Loop through the search results and display each item -->
-            {% if name %}
-                {% set results = name.split('\n') %}
-                <form action="/add_plant" method="POST" class="add-plant-form">
-                    <div class="row">
-                        {% for index in range(0, results|length, 5) %}
-                            <div class="col-md-4 mb-4">
-                                <div class="card h-100">
-                                    <div class="card-body">
-                                        <h5 class="card-title">{{ results[index+1] }}</h5>
-                                        <p class="card-text">Scientific Name: {{ results[index+2] }}</p>
-                                        {% if results[index+3] != 'no url' %}
-                                            <img src="{{ results[index+3] }}" class="card-img-top" alt="Plant Image">
-                                        {% else %}
-                                            <p>No image available</p>
-                                        {% endif %}
-                                        <!--current problem, whenever, I click this it returns only the first result-->
-                                        <input name="plant_id" value="{{ results[index] }}" type="hidden">
-                                        <button for="plant_id" type="submit" value="{{results[index]}}" class="btn btn-primary">Add</button>
-                                    </div>
-                                </div>
-                            </div>
-                        {% endfor %}
+        
+        <!-- check whether plant name var is defined and not empty -->
+        {% if plant_name and care_level %}
+        <div class="result mt-5"> 
+            <h2> Search Result: </h2>
+            <p> You searched for plant: {{ plant_name }} and care_level: {{care_level}} </p>
+            <!--<p>{{search_results}}</p>-->
+            <div class="row">
+                {% for plant in search_results%}
+                    <!--help create 3 equal width sized columns-->
+                    <div class="col-md-4 mb-3">
+                        <!--create small plant cards-->
+                        <div class="plant-card border p-3" onclick="viewPlantDetails({{ plant.id }})"> <!--in next iteration of code add the click event-->
+                            <h4>{{plant.common_name}}</h4>
+                            <p>{{plant.scientific_name[0]}}</p>
+                            {%if plant.default_image%} <!--shorthand but could also use plant['default_image']['thumbnail'] -->
+                                <img src="{{plant.default_image.original_url}}" alt="{{plant.common_name}} Image" class="img-fluid" style="width: 300px; height: 300px;">
+                                <!--stylistic choice: original image which is clear original_url or thumbnail 3 images or 2?-->
+                                <!--Bad: there might be duplicates - due to databse: bcz we're not technically skilled in bio we can't parse-->
+                            {%else%}
+                                <p> No image available </p>
+                            {%endif%}
+                        </div>
                     </div>
-                </form>
-            {% endif %}
+                {% endfor%}
+            </div>
         </div>
+        {% endif %}
     </div>
-    </div>
+    <script> 
+        // when card is clicked view plants -- such a miracle worker!
+        function viewPlantDetails(plantId){
+            //redirect details to page with plantID
+            window.location.href = "/plant_details/" + plantId;
+        }
+
+    </script>
 {% endblock %}

@@ -40,8 +40,9 @@ class User(db.Model):
     
 class UsersPlants(db.Model):
     # make sure we get a value at least for common name and scientific name 
-    id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    plant_id = db.Column(db.Integer, primary_key=True)
     common_name = db.Column(db.String(250), nullable=False)
+    name = db.Column(db.String(250))
     scientific_name = db.Column(db.Text, nullable=False)
     other_names = db.Column(db.Text)
     family = db.Column(db.String(100))
@@ -88,15 +89,10 @@ class UsersPlants(db.Model):
     
 
     # way for us to connect to the User model:
-    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    #user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', back_populates='plants')
 
     
-    
-
-
-
-
 # Generating a secret key using the secrets module (not currently used in the code)
 secret_key = secrets.token_hex(32)
 #print(secret_key)
@@ -151,26 +147,6 @@ def login():
     authorization_url, state = flow.authorization_url()
     session["state"] = state
     return redirect(authorization_url)
-
-
-# Define the route to handle adding a plant
-@app.route('/add_plant', methods=['POST'])
-def add_plant():
-    if request.method == 'POST':
-        plant_id = int(request.form.get('plant_id'))
-        print(plant_id)
-        # Check if the plant ID is already in the saved_plants list
-        if plant_id in session['saved_plants']:
-            print("I added", plant_id)
-            return jsonify({'success': False, 'message': 'Plant already added.'})
-
-        print(session['saved_plants'])
-        # If the plant ID is not in the list, add it to the saved_plants list
-        session['saved_plants'].append(plant_id)
-        print(session['saved_plants'])
-        # allow session mofification to be stored
-        session.modified = True
-        return jsonify({'success': True, 'message': 'Plant added successfully.'})
 
 @app.route("/callback")
 def callback():
@@ -253,101 +229,58 @@ def home():
 def protected_area():
     return render_template('protected_area.html')
 
-
-@app.route('/plant_search', methods=['GET', 'POST'])
+@app.route('/plant_search', methods=['POST', 'GET'])
 def plant_search():
-    output = ''
+    #note you'll get an error whenever you click navbar if u don't specify method
     if request.method == 'POST':
-       
-        # Get the user's search query from the form data
-        plant_name = request.form.get('plant_name')
-        care_level = request.form.get('care_level')
-       
+        plant_name = request.form['plant_name']
+        care_level = request.form['care_level'] 
+        # we perform our search below:
+        
         # response
         response = requests.get('https://perenual.com/api/species-list?key=sk-x2Xs64bb0058c865e1636&q='+plant_name)
 
         result = response.json()
         newRes = result['data']
+        
+        #initialize some vars we'll be using later 
         index = 0
-        session['search results'] = []
-       
-        while index < len(newRes):
-            id = newRes[index]['id']
-            idStr = str(id)
-            out_id = ''
-            if care_level != 'N/A':
+        output = None 
+        # if the searcher doesn't care about the care level, we want to output the json as it is 
+        if care_level == 'N/A':
+            output = newRes
+        else: 
+            #otherwise we want to filter the output of newRes to suit the carelevel the user wants
+            #here, we want to use a while loop: 
+            output = []
+            while index < len(newRes):
+                id= newRes[index]['id']
+                idStr = str(newRes[index]['id'])
                 levelResponse = requests.get('https://perenual.com/api/species/details/'+idStr+'?key=sk-x2Xs64bb0058c865e1636')
                 levelResult = levelResponse.json()
-            
+                print(levelResult)
                 if care_level == levelResult["care_level"]:
-                    # addition: 
-                    out_id = idStr
-                    output += idStr + '\n'
-                    #addition
-                    common_name  =  newRes[index]['common_name']
-                    output += newRes[index]['common_name']
-                    output += '\n'
-                    output += str(newRes[index]['scientific_name'])
-                    #addition
-                    scientific_names = newRes[index]['scientific_name']
-                    output += '\n'
-                    picture = newRes[index]['default_image']
-                    if picture == None:
-                        output += 'no url' + '\n'
-                    else:
-                        output += picture['original_url']
-                        output += '\n'
-                    #print()
-                    output += '\n'
-            else:
-                # here we will acquire all the data possible for 
-                output += idStr + '\n'
-                output += newRes[index]['common_name']
-                #addition
-                common_name  =  newRes[index]['common_name']
-                output += '\n'
-                output += str(newRes[index]['scientific_name'])
-                output += '\n'
-                #addition
-                scientific_names = newRes[index]['scientific_name']
-                picture = newRes[index]['default_image']
-                if picture == None:
-                    #print("no_url")
-                    output += 'no url' + '\n'
-                else:
-                    #print(picture['original_url'])
-                    output += picture['original_url']
-                    output += '\n'
-                #print()
-                output += '\n'
-            index += 1
-        #return render_template('plant_search.html', name=output)
-       
-        print(output2)
-        print("/n".split(output))
-        # For demonstration purposes, let's print the search parameters.
-        # if plant_name:
-        #     print('Search by Name:', plant_name)
-        # if care_level:
-        #     print('Search by Care Level:', care_level)
+                    # here we get the result from using that exact id to search if it's care_level matches the users wants:
+                    print(levelResult)
+                    output.append(levelResult)
+                #Increase idx so that we don't enter infinite while loop
+                index += 1
+        return render_template('plant_search.html', plant_name=plant_name, care_level=care_level, search_results=output)
+    return render_template('plant_search.html')
 
+@app.route('/plant_details/<int:plant_id>', methods=['POST', 'GET'])
+def plant_details(plant_id):
+    # Get specific plant details using plant_id
+    response = requests.get(f'https://perenual.com/api/species/details/{plant_id}?key=sk-x2Xs64bb0058c865e1636')
+    plant_details = response.json()
+    return render_template('plant_details.html', plant=plant_details)
 
-        #output2 = 
-        # we'll put our json into a list of plants as search_results.
-        search_results = [
-            {plant_name: care_level}
-        ]
-
-
-        # Return the search_results to the template for displaying the results.
-        return render_template('plant_search.html', search_results=search_results, name=output)
-
-
-    # If it's a GET request, we render the plant_search.html template.
-    return render_template('plant_search.html', name=output)
-
-
-
+# drum roll ---- we might just finally add these plants! 
+@app.route('/add_plant', methods=["POST"])
+def add_plant():
+    
+    
+    
 
 @app.route('/user_profile')
 def user_profile():
@@ -365,51 +298,6 @@ def plant_diary():
 def plant_simulation():
     # Render the plant_simulation.html template for the plant simulation page
     return render_template('plant_simulation.html')
-
-
-@app.route('/plant_recommendations')
-def plant_recommendations():
-    # Get the user's search query from the form data
-        plant_name = request.form.get('plant_name')
-        care_level = request.form.get('care_level')
-       
-        # response
-        response = requests.get('https://perenual.com/api/species-list?key=sk-L9aC64b73122e37dc1596&q='+plant_name)
-
-
-        result = response.json()
-        newRes = result['data']
-        index = 0
-        output = ''
-
-
-        while index < len(newRes):
-            id = newRes[index]['id']
-            #print(id)
-           
-            idStr = str(id)
-            output += idStr + '\n'
-            #print(newRes[index]['common_name'])
-            output += newRes[index]['common_name']
-            output += '\n'
-            #print(newRes[index]['scientific_name'])
-            output += str(newRes[index]['scientific_name'])
-            output += '\n'
-            picture = newRes[index]['default_image']
-            if picture == None:
-                #print("no_url")
-                output += 'no url' + '\n'
-            else:
-                #print(picture['original_url'])
-                output += picture['original_url']
-                output += '\n'
-            #print()
-            output += '\n'
-            index += 1
-
-
-        # Return the search_results to the template for displaying the results.
-        return render_template('plant_search.html', name=output)
 
 
 @app.route('/error')

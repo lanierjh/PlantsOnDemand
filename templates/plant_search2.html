@@ -1,0 +1,65 @@
+{% extends "layout.html" %}
+
+{% block title %}
+    Plant Search
+{% endblock %}
+
+{% block content %}
+    <div class="container mt-5">
+        <h2>Plant Search:</h2>
+        <!-- Plant search form -->
+        <form action="/plant_search" method="POST">
+            <div class="row">
+                <div class="col-md-6 mb-3">
+                    <label for="plant_name" class="form-label">Plant Name:</label>
+                    <input type="text" name="plant_name" id="plant_name" class="form-control">
+                </div>
+                <div class="col-md-6 mb-3">
+                    <label for="care_level" class="form-label">Care Level:</label>
+                    <select name="care_level" id="care_level" class="form-select">
+                        <option value="Easy">Beginner</option>
+                        <option value="Moderate">Moderate</option>
+                        <option value="Medium">Intermediate</option>
+                        <option value="Hard">Advanced</option>
+                        <option value="N/A">None</option>
+                    </select>
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary">Search</button>
+        </form>
+    </div>
+    <div class='container mt-4'> 
+    <!-- Output container to display search results -->
+    <div class="container mt-5">
+        <h2>Plant Search Results:</h2>
+        <div class="row" id="search_results">
+            <!-- Loop through the search results and display each item -->
+            {% if name %}
+                {% set results = name.split('\n') %}
+                <form action="/add_plant" method="POST" class="add-plant-form">
+                    <div class="row">
+                        {% for index in range(0, results|length, 5) %}
+                            <div class="col-md-4 mb-4">
+                                <div class="card h-100">
+                                    <div class="card-body">
+                                        <h5 class="card-title">{{ results[index+1] }}</h5>
+                                        <p class="card-text">Scientific Name: {{ results[index+2] }}</p>
+                                        {% if results[index+3] != 'no url' %}
+                                            <img src="{{ results[index+3] }}" class="card-img-top" alt="Plant Image">
+                                        {% else %}
+                                            <p>No image available</p>
+                                        {% endif %}
+                                        <!--current problem, whenever, I click this it returns only the first result-->
+                                        <input name="plant_id" value="{{ results[index] }}" type="hidden">
+                                        <button for="plant_id" type="submit" value="{{results[index]}}" class="btn btn-primary">Add</button>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                </form>
+            {% endif %}
+        </div>
+    </div>
+    </div>
+{% endblock %}
