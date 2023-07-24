@@ -204,12 +204,7 @@ def callback():
         db.session.add(new_user)
         db.session.commit()
     # if the user has an account we want to restore the previous user data 
-    if user:
-        # Get user-specific data from the database (e.g., saved plants)
-        saved_plants = saved_plants.query.filter(users_plants.id.in_(user.saved_plant_ids)).all()
-        # restore user history
-        session['saved_plants'] = saved_plants
-        return render_template("protected_area.html", user=user, saved_plants=saved_plants)
+    # if the user has an account, we want to restore the previous user data we'll do this in user_profile and protected area
     # Redirect to the protected area after successful authentication
     return redirect("/protected_area")
 
@@ -221,18 +216,23 @@ def logout():
     session.clear()
     return redirect("/")
 
-
 # Route for the home page
 @app.route("/")
 def home():
     return render_template('home.html')
 
-
 # Route for displaying the protected area after successful login
 @app.route("/protected_area")
-#@login_is_required
+@login_is_required
 def protected_area():
-    return render_template('protected_area.html')
+    # for this dashboard we wanna query by id first then save the plants aft 
+    user = User.query.filter_by(googleId=session["google_id"]).first()
+    if user:
+        saved_plants = user.plants  # Get the plants associated with the user
+    else:
+        saved_plants = []  # Initialize an empty list when the user has no plants
+    #in the return statement, we want to pass the saved_plants into the user template where each column should be accessible 
+    return render_template('protected_area.html', user=user, saved_plants=saved_plants)
 
 @app.route('/plant_search', methods=['POST', 'GET'])
 def plant_search():
@@ -411,12 +411,18 @@ def add_plant():
         return redirect("/user_profile")    
     
     
-    
-
 @app.route('/user_profile')
+@login_is_required
 def user_profile():
     # Render the user_profile.html template for the user profile page
-    return render_template('user_profile.html')
+    # the google id is our  helper thruout
+    # for this dashboard we wanna query by id first then save the plants aft 
+    user = User.query.filter_by(googleId=session["google_id"]).first()
+    if user:
+        saved_plants = user.plants  # Get the plants associated with the user
+    else:
+        saved_plants = []  # Initialize an empty list when the user has no plants
+    return render_template('user_profile.html', user=user, saved_plants=saved_plants)
 
 @app.route('/plant_diary')
 def plant_diary():

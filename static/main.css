@@ -1,0 +1,77 @@
+/* Circular motion for the profile picture user profile */
+.profile-section {
+    text-align: center;
+    margin-top: 20px;
+}
+
+.profile-picture-container {
+    display: inline-block;
+    border-radius: 50%;
+    overflow: hidden;
+}
+
+.profile-picture {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+}
+
+
+/* Grid layout styles */
+.container {
+    padding: 20px;
+}
+
+.row {
+    margin: 0 -10px; /* To add some spacing between columns */
+}
+
+.col-md-6 {
+    padding: 0 10px; /* Add padding between columns */
+}
+
+.plant-grid {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+}
+
+/* Plant card styles */
+.card {
+    width: 200px;
+    height: 300px;
+    border: 1px solid #ccc;
+    border-radius: 12px;
+    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.card-img-top {
+    border-top-left-radius: 12px;
+    border-top-right-radius: 12px;
+    height: 150px;
+    object-fit: cover;
+}
+
+.card-body {
+    padding: 16px;
+}
+
+.card-title {
+    font-size: 20px;
+    margin-bottom: 8px;
+}
+
+.card-text {
+    font-size: 14px;
+}
+
+/* Responsive styles */
+@media (max-width: 768px) {
+    .plant-grid {
+        justify-content: center;
+    }
+
+    .col-md-6 {
+        flex-basis: 100%; /* Set the width to 100% for small screens to occupy full width */
+    }
+}
