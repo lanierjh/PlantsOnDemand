@@ -44,7 +44,7 @@ class User(db.Model):
     
 class UsersPlants(db.Model):
     # make sure we get a value at least for common name and scientific name 
-    plant_id = db.Column(db.Integer, primary_key=True)
+    plant_id = db.Column(db.Integer, primary_key=True, nullable=False)
     common_name = db.Column(db.String(250), nullable=False)
     nickname = db.Column(db.String(250))
     scientific_name = db.Column(db.Text, nullable=False)
@@ -74,24 +74,24 @@ class UsersPlants(db.Model):
     seeds = db.Column(db.Integer)
     flowering_season = db.Column(db.String(100))
     flowering_color = db.Column(db.String(100))
-    cones = db.Column(db.Boolean)
-    fruits = db.Column(db.Boolean)
-    edible_fruit = db.Column(db.Boolean)
-    edible_leaf = db.Column(db.Boolean)
-    medicinal = db.Column(db.Boolean)
-    poisonous_to_humans = db.Column(db.Boolean)
-    poisonous_to_pets = db.Column(db.Boolean)
+    cones = db.Column(db.String(200)) #once a boolean
+    fruits = db.Column(db.String(200))
+    edible_fruit = db.Column(db.String(200))
+    edible_leaf = db.Column(db.String(200))
+    medicinal = db.Column(db.String(200))
+    poisonous_to_humans = db.Column(db.String(200)) #this one is an integer
+    poisonous_to_pets = db.Column(db.String(200)) #this one is an integer
     description = db.Column(db.Text)
     hardiness_min = db.Column(db.String(10))
     hardiness_max = db.Column(db.String(10))
     hardiness_map = db.Column(db.Text)
     # Soil info
     soil = db.Column(db.Text)  # If there are multiple soil types, we can store them as a string
-    
+    #"drought_tolerant": false
     #this is a very good dataset, if we wanted to expand on this we could use the fields abv
     # as somewhat of a filter
-    
-
+    #0: Represents "false" or "off" in boolean context.
+    #1: Represents "true" or "on" in boolean context.
     # way for us to connect to the User model wholistically:
     # Add the user_id column as a foreign key to the User model
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
@@ -285,6 +285,7 @@ def plant_details(plant_id):
 @login_is_required
 def add_plant():
     #check if the user is logged in
+    #retrieve form data 
     plant_id = request.form.get('plant_id')
     common_name = request.form.get('common_name')
     scientific_name = request.form.get('scientific_name')
@@ -326,14 +327,29 @@ def add_plant():
     
     # we wanna check if the plant with that given id already exists for the user
     user = User.query.filter_by(googleId=session["google_id"]).first()
+    #in the case where the user isn't found we want to throw an error
+    if not user:
+        return "User not found!", 404
+    #I predict this might cause problems in that if the db is deleted and someone has cache or cookies 
+    # they might log in but their info might not be added>>>>or do we acc for tt?
+    # we won't find their info and an error will be thrown 
+    
+    
     existing_plant = UsersPlants.query.filter_by(user=user,plant_id=plant_id).first()
     
     if existing_plant:
         # if the plant already exists we can choose to update it's data or throw error
         if nickname:
             existing_plant.nickname = nickname 
-        db.session.commit()
-        return redirect("/user_profile")
+        # we hope this update feature works, but if not, we have backup
+        try:
+            db.session.commit()
+            return redirect("/user_profile")
+        except Exception as e:
+            #find way to handle errors or log error for debug purposes 
+            # also want to undo changes made : might wanna make a def function for this 
+            db.session.rollback()
+            return "Error: Failed to update. Try again.", 500
     else:
         # Create a new UsersPlants object and add it to the database
         new_plant = UsersPlants(
@@ -376,11 +392,21 @@ def add_plant():
             hardiness_map=hardiness_map,
             soil=soil
         )   
-        #User.plants.append(new_plant)
-        db.session.add(new_plant)
+        # #User.plants.append(new_plant)
+        # db.session.add(new_plant)
         
-        #make sure we don't lose this info we've stored
-        db.session.commit()
+        # #make sure we don't lose this info we've stored
+        # db.session.commit()
+        # Add the new plant to the user's list of plants
+        user.plants.append(new_plant)
+        # we hope this update feature works, but if not, we have backup
+        try:
+            db.session.commit()
+            return redirect("/user_profile")
+        except Exception as e:
+            #find way to handle errors or log error for debug purposes 
+            db.session.rollback()
+            return "Error: Failed to update. Try again.", 500
     
         return redirect("/user_profile")    
     
@@ -392,29 +418,23 @@ def user_profile():
     # Render the user_profile.html template for the user profile page
     return render_template('user_profile.html')
 
-
 @app.route('/plant_diary')
 def plant_diary():
     # Render the plant_diary.html template for the plant diary page
     return render_template('plant_diary.html')
-
 
 @app.route('/plant_simulation')
 def plant_simulation():
     # Render the plant_simulation.html template for the plant simulation page
     return render_template('plant_simulation.html')
 
-
 @app.route('/error')
 def error():
     # Render the error.html template for the error page
     return render_template('error.html')
 
-
-
 with app.app_context():
     db.create_all()
-
 
 if __name__ == "__main__":
     # Override the OAUTHLIB_INSECURE_TRANSPORT variable for local development
@@ -426,10 +446,4 @@ if __name__ == "__main__":
     # Running the Flask application in debug mode
     app.run(debug=True)
     
-    
-
-  
-
-
-
   
