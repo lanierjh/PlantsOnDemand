@@ -19,6 +19,7 @@ import google.auth.transport.requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 
 # Creating a Flask application instance
@@ -26,6 +27,9 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///PlantsOnDemand.db'
 db = SQLAlchemy(app)
 
+# Initialize Flask-Migrate
+# will help manage  changes to db schema in systematic way over time by automating the process of generating database migration scripts.
+#migrate = Migrate(app, db) couldn't download, will do nxt time 
 
 # first we wanna save the session dat
 # then we'll figure out how to retrieve the session data 
@@ -35,14 +39,14 @@ class User(db.Model):
     email = db.Column(db.String(250), unique=True, nullable=False)
     picture = db.Column(db.String(250), unique=True, nullable=False)
     googleId = db.Column(db.String(255), unique=True, nullable=False)
-    # a way for us to create a relationship btwn the user and their many plants
+    # a way for us to specify a relationship btwn the user and their many plants
     plants = db.relationship('UsersPlants', back_populates='user')
     
 class UsersPlants(db.Model):
     # make sure we get a value at least for common name and scientific name 
     plant_id = db.Column(db.Integer, primary_key=True)
     common_name = db.Column(db.String(250), nullable=False)
-    name = db.Column(db.String(250))
+    nickname = db.Column(db.String(250))
     scientific_name = db.Column(db.Text, nullable=False)
     other_names = db.Column(db.Text)
     family = db.Column(db.String(100))
@@ -88,8 +92,9 @@ class UsersPlants(db.Model):
     # as somewhat of a filter
     
 
-    # way for us to connect to the User model:
-    #user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    # way for us to connect to the User model wholistically:
+    # Add the user_id column as a foreign key to the User model
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', back_populates='plants')
 
     
@@ -277,7 +282,107 @@ def plant_details(plant_id):
 
 # drum roll ---- we might just finally add these plants! 
 @app.route('/add_plant', methods=["POST"])
+@login_is_required
 def add_plant():
+    #check if the user is logged in
+    plant_id = request.form.get('plant_id')
+    common_name = request.form.get('common_name')
+    scientific_name = request.form.get('scientific_name')
+    nickname = request.form.get('nickname')  # Add other fields for the data you want to add to the database
+    other_names = request.form.get('other_names')
+    family = request.form.get('family')
+    origin = request.form.get('origin')
+    plant_type = request.form.get('plant_type')
+    dimension = request.form.get('dimension')
+    dimensions = request.form.get('dimensions')
+    cycle = request.form.get('cycle')
+    watering = request.form.get('watering')
+    depth_water_requirement = request.form.get('depth_water_requirement')
+    volume_water_requirement = request.form.get('volume_water_requirement')
+    watering_period = request.form.get('watering_period')
+    watering_general_benchmark = request.form.get('watering_general_benchmark')
+    default_image_url = request.form.get('default_image_url')
+    propagation = request.form.get('propagation')
+    maintenance = request.form.get('maintenance')
+    care_level = request.form.get('care_level')
+    care_guides = request.form.get('care_guides')
+    pruning_month = request.form.get('pruning_month')
+    pruning_count = request.form.get('pruning_count')
+    seeds = request.form.get('seeds')
+    flowering_season = request.form.get('flowering_season')
+    flowering_color = request.form.get('flowering_color')
+    cones = request.form.get('cones')
+    fruits = request.form.get('fruits')
+    edible_fruit = request.form.get('edible_fruit')
+    edible_leaf = request.form.get('edible_leaf')
+    medicinal = request.form.get('medicinal')
+    poisonous_to_humans = request.form.get('poisonous_to_humans')
+    poisonous_to_pets = request.form.get('poisonous_to_pets')
+    description = request.form.get('description')
+    hardiness_min = request.form.get('hardiness_min')
+    hardiness_max = request.form.get('hardiness_max')
+    hardiness_map = request.form.get('hardiness_map')
+    soil = request.form.get('soil')
+    
+    # we wanna check if the plant with that given id already exists for the user
+    user = User.query.filter_by(googleId=session["google_id"]).first()
+    existing_plant = UsersPlants.query.filter_by(user=user,plant_id=plant_id).first()
+    
+    if existing_plant:
+        # if the plant already exists we can choose to update it's data or throw error
+        if nickname:
+            existing_plant.nickname = nickname 
+        db.session.commit()
+        return redirect("/user_profile")
+    else:
+        # Create a new UsersPlants object and add it to the database
+        new_plant = UsersPlants(
+            plant_id=plant_id,
+            common_name=common_name,
+            scientific_name=scientific_name,
+            nickname=nickname,  # Add other fields for the data you want to add to the database
+            other_names=other_names,
+            family=family,
+            origin=origin,
+            plant_type=plant_type,
+            dimension=dimension,
+            dimensions=dimensions,
+            cycle=cycle,
+            watering=watering,
+            depth_water_requirement=depth_water_requirement,
+            volume_water_requirement=volume_water_requirement,
+            watering_period=watering_period,
+            watering_general_benchmark=watering_general_benchmark,
+            default_image_url=default_image_url,
+            propagation=propagation,
+            maintenance=maintenance,
+            care_level=care_level,
+            care_guides=care_guides,
+            pruning_month=pruning_month,
+            pruning_count=pruning_count,
+            seeds=seeds,
+            flowering_season=flowering_season,
+            flowering_color=flowering_color,
+            cones=cones,
+            fruits=fruits,
+            edible_fruit=edible_fruit,
+            edible_leaf=edible_leaf,
+            medicinal=medicinal,
+            poisonous_to_humans=poisonous_to_humans,
+            poisonous_to_pets=poisonous_to_pets,
+            description=description,
+            hardiness_min=hardiness_min,
+            hardiness_max=hardiness_max,
+            hardiness_map=hardiness_map,
+            soil=soil
+        )   
+        #User.plants.append(new_plant)
+        db.session.add(new_plant)
+        
+        #make sure we don't lose this info we've stored
+        db.session.commit()
+    
+        return redirect("/user_profile")    
     
     
     

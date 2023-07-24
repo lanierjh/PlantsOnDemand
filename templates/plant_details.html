@@ -25,9 +25,9 @@
 
         <!-- Collapsible Plant Details Section -->
         <div class="collapse mt-3" id="plantDetails">
-            <h4>Scientific Name: {{ plant.scientific_name[0] }}</h4>
-            <p>Family: {{ plant.family }}</p>
-            <p>Origin: {{ plant.origin | join(', ') }}</p>
+            <p><strong>Scientific Name:</strong> {{ plant.scientific_name[0] }}</p>
+            <p><strong>Family:</strong> {{ plant.family }}</p>
+            <p><strong>Origin:</strong>{{ plant.origin | join(', ') }}</p>
             <p>Type: {{ plant.plant_type }}</p>
             <p>Dimension: {{ plant.dimension }}</p>
             <p>Cycle: {{ plant.cycle }}</p>
@@ -57,7 +57,6 @@
         <!-- Add Plant button to add the plant to the database -->
         <div class="text-center mt-3">
             <form action="/add_plant" method="POST">
-                plant_id = db.Column(db.Integer, primary_key=True)
                     <input type="hidden" name="plant_id" value="{{plant.id}}">
                     <input type="hidden" name="common_name" value="{{ plant.common_name }}">
                     <input type="hidden" name="common_name" value="{{ nickname }}">
