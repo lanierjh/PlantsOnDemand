@@ -1,3 +1,8 @@
+body {
+    margin: 0;
+    padding: 0;
+}
+
 /* Circular motion for the profile picture user profile */
 .profile-section {
     text-align: center;
@@ -16,18 +21,17 @@
     object-fit: cover;
 }
 
-
 /* Grid layout styles */
 .container {
     padding: 20px;
 }
 
 .row {
-    margin: 0 -10px; /* To add some spacing between columns */
+    margin: 0 -15px;
 }
 
 .col-md-6 {
-    padding: 0 10px; /* Add padding between columns */
+    padding: 0 15px;
 }
 
 .plant-grid {
@@ -36,12 +40,34 @@
     justify-content: space-between;
 }
 
+/* Navbar styles */
+#nav-color {
+    color: forestgreen; /* Replace "forestgreen"  */
+}
+.navbar {
+    background-color: forestgreen ;
+}
+
+.navbar-brand {
+    font-size: 30px;
+}
+
+.navbar-nav .nav-item .nav-link {
+    
+}
+
+.navbar navbar-expand-lg navbar-light bg-light{
+    color: #228B22
+}
+
+.navbar-nav .nav-item .nav-link:hover {
+    
+}
+
 /* Plant card styles */
 .card {
-    width: 200px;
-    height: 300px;
-    border: 1px solid #ccc;
-    border-radius: 12px;
+    
+    border: 1px solid #AA8B56;
     box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
@@ -63,6 +89,32 @@
 
 .card-text {
     font-size: 14px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+/* Plant Timeline and Plant Diaries styles */
+/* ... (styles for these sections) */
+
+/* Footer styles */
+.footer {
+    
+    
+    padding: 10px 0;
+    text-align: center;
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+}
+
+.footer a {
+    
+}
+
+.footer a:hover {
+    
 }
 
 /* Responsive styles */
@@ -72,6 +124,6 @@
     }
 
     .col-md-6 {
-        flex-basis: 100%; /* Set the width to 100% for small screens to occupy full width */
+        flex-basis: 100%;
     }
 }

@@ -98,6 +98,11 @@ class UsersPlants(db.Model):
     # Soil info
     soil = db.Column(db.Text)  # If there are multiple soil types, we can store them as a string
     #"drought_tolerant": false
+    # Add fields for storing the reminder preferences
+    reminder_frequency = db.Column(db.String(50))
+    reminder_time = db.Column(db.String(10))
+    reminder_day = db.Column(db.String(20))
+
     #this is a very good dataset, if we wanted to expand on this we could use the fields abv
     # as somewhat of a filter
     #0: Represents "false" or "off" in boolean context.
@@ -106,7 +111,6 @@ class UsersPlants(db.Model):
     # Add the user_id column as a foreign key to the User model
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
     user = db.relationship('User', back_populates='plants')
-    #log = db.relationship('PlantLog', backref='plants')
 
     
 # Generating a secret key using the secrets module (not currently used in the code)
@@ -240,10 +244,11 @@ def protected_area():
     user = User.query.filter_by(googleId=session["google_id"]).first()
     if user:
         saved_plants = user.plants  # Get the plants associated with the user
+        saved_log = user.log
     else:
         saved_plants = []  # Initialize an empty list when the user has no plants
     #in the return statement, we want to pass the saved_plants into the user template where each column should be accessible 
-    return render_template('protected_area.html', user=user, saved_plants=saved_plants)
+    return render_template('protected_area.html', user=user, saved_plants=saved_plants, saved_log=saved_log)
 
 @app.route('/plant_search', methods=['POST', 'GET'])
 def plant_search():
@@ -452,6 +457,41 @@ def plant_write():
         db.session.commit()
     
     return render_template('plant_write.html')
+
+@app.route('/add_reminder/<int:plant_id>', methods=['POST', 'GET'])
+def add_reminder(plant_id):
+    # Get specific plant details using plant_id
+    current_user = User.query.filter_by(googleId=session["google_id"]).first()
+
+    plant = UsersPlants.query.filter_by(user=current_user, plant_id=plant_id).first()
+
+    if not plant:
+        # Handle the case when the plant with the given plant_id is not found just in case, but wedon't anticipate this hpning 
+        return render_template('error.html', error_message="Plant not found")
+
+    if request.method == 'POST':
+        # Retrieve the form data for reminder preferences
+        reminder_frequency = request.form['reminder_frequency']
+        reminder_time = request.form['reminder_time']
+
+        if reminder_frequency == 'weekly':
+            # If the reminder is set to "Weekly," retrieve the selected day from the form
+            reminder_day = request.form['reminder_day']
+            # Update the plant's reminder preferences for weekly reminders
+            plant.reminder_frequency = reminder_frequency
+            plant.reminder_day = reminder_day
+            plant.reminder_time = reminder_time
+        else:
+            # For daily  reminders, only update frequency and time
+            plant.reminder_frequency = reminder_frequency
+            plant.reminder_time = reminder_time
+
+        # Commit changes to the database
+        db.session.commit()
+        # Redirect to the user profile page or any other appropriate page
+        return redirect("/protected_area")
+
+    return render_template('add_reminder.html', plant=plant)
 
 @app.route('/plant_diary')
 def plant_diary():
