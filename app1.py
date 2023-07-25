@@ -88,6 +88,11 @@ class UsersPlants(db.Model):
     # Soil info
     soil = db.Column(db.Text)  # If there are multiple soil types, we can store them as a string
     #"drought_tolerant": false
+    # Add fields for storing the reminder preferences
+    reminder_frequency = db.Column(db.String(50))
+    reminder_time = db.Column(db.String(10))
+    reminder_day = db.Column(db.String(20))
+
     #this is a very good dataset, if we wanted to expand on this we could use the fields abv
     # as somewhat of a filter
     #0: Represents "false" or "off" in boolean context.
@@ -117,7 +122,8 @@ flow = Flow.from_client_secrets_file(
     client_secrets_file=client_secrets_file,
     scopes=["https://www.googleapis.com/auth/userinfo.profile",
             "https://www.googleapis.com/auth/userinfo.email",
-            "openid"],
+            "openid",
+            "https://www.googleapis.com/auth/calendar"],
     redirect_uri="http://127.0.0.1:5000/callback"
 )
 # "https://www.googleapis.com/auth/user.addresses.read" maybe if we decide to add the location another useful one owould be calendar
@@ -234,6 +240,27 @@ def protected_area():
     #in the return statement, we want to pass the saved_plants into the user template where each column should be accessible 
     return render_template('protected_area.html', user=user, saved_plants=saved_plants)
 
+@app.route('/user_profile')
+@login_is_required
+def user_profile():
+    # Fetch user information from the session
+    user_id = session.get("google_id")
+
+    # Get the user from the database using the user_id
+    user = User.query.filter_by(googleId=user_id).first()
+
+    # Check if the user exists in the database
+    if not user:
+        return "User not found!", 404
+
+    # Fetch the plants associated with the user
+    saved_plants = user.plants
+
+    # Render the user_profile.html template and pass the user and saved_plants variables to the template
+    return render_template('user_profile.html', user=user, saved_plants=saved_plants)
+
+
+
 @app.route('/plant_search', methods=['POST', 'GET'])
 def plant_search():
     #note you'll get an error whenever you click navbar if u don't specify method
@@ -344,7 +371,7 @@ def add_plant():
         # we hope this update feature works, but if not, we have backup
         try:
             db.session.commit()
-            return redirect("/user_profile")
+            return redirect("/protected_area")
         except Exception as e:
             #find way to handle errors or log error for debug purposes 
             # also want to undo changes made : might wanna make a def function for this 
@@ -402,41 +429,49 @@ def add_plant():
         # we hope this update feature works, but if not, we have backup
         try:
             db.session.commit()
-            return redirect("/user_profile")
+            return redirect("/protected_area")
         except Exception as e:
             #find way to handle errors or log error for debug purposes 
             db.session.rollback()
             return "Error: Failed to update. Try again.", 500
     
-        return redirect("/user_profile")    
+        return redirect("/protected_area")    
 
-@app.route('/add_reminder/<int:plant_id>', methods=['GET'])
-@login_is_required
+
+@app.route('/add_reminder/<int:plant_id>', methods=['POST', 'GET'])
 def add_reminder(plant_id):
-    # Get specific plant details using plant_id 
+    # Get specific plant details using plant_id
     current_user = User.query.filter_by(googleId=session["google_id"]).first()
 
     plant = UsersPlants.query.filter_by(user=current_user, plant_id=plant_id).first()
 
     if not plant:
-        # Handle the case when the plant with the given plant_id is not found
+        # Handle the case when the plant with the given plant_id is not found just in case, but wedon't anticipate this hpning 
         return render_template('error.html', error_message="Plant not found")
 
-    return render_template('add_reminder.html', plant=plant)
+    if request.method == 'POST':
+        # Retrieve the form data for reminder preferences
+        reminder_frequency = request.form['reminder_frequency']
+        reminder_time = request.form['reminder_time']
 
-    
-@app.route('/user_profile')
-@login_is_required
-def user_profile():
-    # Render the user_profile.html template for the user profile page
-    # the google id is our  helper thruout
-    # for this dashboard we wanna query by id first then save the plants aft 
-    user = User.query.filter_by(googleId=session["google_id"]).first()
-    if user:
-        saved_plants = user.plants  # Get the plants associated with the user
-    else:
-        saved_plants = []  # Initialize an empty list when the user has no plants
-    return render_template('user_profile.html', user=user, saved_plants=saved_plants)
+        if reminder_frequency == 'weekly':
+            # If the reminder is set to "Weekly," retrieve the selected day from the form
+            reminder_day = request.form['reminder_day']
+            # Update the plant's reminder preferences for weekly reminders
+            plant.reminder_frequency = reminder_frequency
+            plant.reminder_day = reminder_day
+            plant.reminder_time = reminder_time
+        else:
+            # For daily  reminders, only update frequency and time
+            plant.reminder_frequency = reminder_frequency
+            plant.reminder_time = reminder_time
+
+        # Commit changes to the database
+        db.session.commit()
+        # Redirect to the user profile page or any other appropriate page
+        return redirect("/protected_area")
+
+    return render_template('add_reminder.html', plant=plant)
 
 @app.route('/plant_diary')
 def plant_diary():
