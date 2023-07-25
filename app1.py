@@ -409,7 +409,21 @@ def add_plant():
             return "Error: Failed to update. Try again.", 500
     
         return redirect("/user_profile")    
-    
+
+@app.route('/add_reminder/<int:plant_id>', methods=['GET'])
+@login_is_required
+def add_reminder(plant_id):
+    # Get specific plant details using plant_id 
+    current_user = User.query.filter_by(googleId=session["google_id"]).first()
+
+    plant = UsersPlants.query.filter_by(user=current_user, plant_id=plant_id).first()
+
+    if not plant:
+        # Handle the case when the plant with the given plant_id is not found
+        return render_template('error.html', error_message="Plant not found")
+
+    return render_template('add_reminder.html', plant=plant)
+
     
 @app.route('/user_profile')
 @login_is_required
