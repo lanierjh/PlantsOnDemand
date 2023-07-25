@@ -1,14 +1,27 @@
-import requests
-import pprint
+import os
+from flask import Flask, render_template, request, redirect, url_for
+from flask_sqlalchemy import SQLAlchemy
 
-response = requests.get('https://perenual.com/api/species-list?key=sk-L9aC64b73122e37dc1596&q=daisy')
-result = response.json()
-newRes = result['data']
+app = Flask(__name__)
+app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///test.db'
+db = SQLAlchemy(app)
 
-id = newRes[0]['id']
-idStr = str(id)
-response = requests.get('https://perenual.com/api/species/details/'+idStr+'?key=sk-L9aC64b73122e37dc1596')
-result = response.json()
 
-print(result['description'])
+class PlantLog(db.Model):
+    log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    title = db.Column(db.String(250), unique=True, nullable=False)
+    date = db.Column(db.String(250), unique=True, nullable=False)
+    notes = db.Column(db.String(1500), unique=True, nullable=False)
+    
+new_note = PlantLog(title="hello",
+                    date="1-1-1",
+                    notes="yes")
+    
+db.session.add(new_note)
+        
+    #make sure we don't lose this info we've stored
+db.session.commit()
+    
+diaries = PlantLog.query.filter_by(title="hello").all()
+print(diaries)
     

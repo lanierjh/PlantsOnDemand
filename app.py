@@ -2,7 +2,7 @@
 import os
 import pathlib
 import flask
-from flask import Flask, redirect, url_for, request, render_template, session, abort
+from flask import Flask, redirect, url_for, request, render_template, session, abort, jsonify
 import secrets
 from google_auth_oauthlib.flow import Flow
 from google.oauth2.credentials import Credentials
@@ -19,6 +19,7 @@ import google.auth.transport.requests
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 
 
 # Creating a Flask application instance
@@ -26,14 +27,88 @@ app = Flask(__name__)
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///PlantsOnDemand.db'
 db = SQLAlchemy(app)
 
+# Initialize Flask-Migrate
+# will help manage  changes to db schema in systematic way over time by automating the process of generating database migration scripts.
+#migrate = Migrate(app, db) couldn't download, will do nxt time 
+
+# first we wanna save the session dat
+# then we'll figure out how to retrieve the session data 
 class User(db.Model):
     id = db.Column(db.Integer, primary_key=True, autoincrement=True)
     name = db.Column(db.String(250), unique=True, nullable=False)
     email = db.Column(db.String(250), unique=True, nullable=False)
     picture = db.Column(db.String(250), unique=True, nullable=False)
     googleId = db.Column(db.String(255), unique=True, nullable=False)
+    # a way for us to specify a relationship btwn the user and their many plants
+    plants = db.relationship('UsersPlants', back_populates='user')
+    log = db.relationship('PlantLog', back_populates='user')
+    
+class PlantLog(db.Model):
+    log_id = db.Column(db.Integer, primary_key=True, autoincrement=True)
+    title = db.Column(db.String(250), nullable=False)
+    date = db.Column(db.String(250), nullable=False)
+    notes = db.Column(db.String(1500), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'))
+    #plants = db.relationship('UsersPlants', back_populates='log')
+    user = db.relationship('User', back_populates='log')
+    
+class UsersPlants(db.Model):
+    # make sure we get a value at least for common name and scientific name 
+    plant_id = db.Column(db.Integer, primary_key=True, nullable=False)
+    common_name = db.Column(db.String(250), nullable=False)
+    nickname = db.Column(db.String(250))
+    scientific_name = db.Column(db.Text, nullable=False)
+    other_names = db.Column(db.Text)
+    family = db.Column(db.String(100))
+    origin = db.Column(db.Text)
+    # like - is it a tree, ..etc 
+    plant_type = db.Column(db.String(100))
+    # will tell u height alone
+    dimension = db.Column(db.String(100))
+    #tell you type of dimension and max and min val
+    # hv to flesh this out more extract min+unitand max +unit
+    dimensions = db.Column(db.Text)
+    cycle = db.Column(db.String(100))
+    watering = db.Column(db.String(100))
+    depth_water_requirement = db.Column(db.Text)
+    volume_water_requirement = db.Column(db.Text)
+    watering_period = db.Column(db.String(100))
+    watering_general_benchmark = db.Column(db.String(100))
+    default_image_url = db.Column(db.String(250))
+    propagation = db.Column(db.String(250))
+    maintenance = db.Column(db.String(100))
+    care_level = db.Column(db.String(100))
+    care_guides = db.Column(db.String(250))
+    pruning_month = db.Column(db.String(250))
+    pruning_count = db.Column(db.Integer)
+    seeds = db.Column(db.Integer)
+    flowering_season = db.Column(db.String(100))
+    flowering_color = db.Column(db.String(100))
+    cones = db.Column(db.String(200)) #once a boolean
+    fruits = db.Column(db.String(200))
+    edible_fruit = db.Column(db.String(200))
+    edible_leaf = db.Column(db.String(200))
+    medicinal = db.Column(db.String(200))
+    poisonous_to_humans = db.Column(db.String(200)) #this one is an integer
+    poisonous_to_pets = db.Column(db.String(200)) #this one is an integer
+    description = db.Column(db.Text)
+    hardiness_min = db.Column(db.String(10))
+    hardiness_max = db.Column(db.String(10))
+    hardiness_map = db.Column(db.Text)
+    # Soil info
+    soil = db.Column(db.Text)  # If there are multiple soil types, we can store them as a string
+    #"drought_tolerant": false
+    #this is a very good dataset, if we wanted to expand on this we could use the fields abv
+    # as somewhat of a filter
+    #0: Represents "false" or "off" in boolean context.
+    #1: Represents "true" or "on" in boolean context.
+    # way for us to connect to the User model wholistically:
+    # Add the user_id column as a foreign key to the User model
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    user = db.relationship('User', back_populates='plants')
+    #log = db.relationship('PlantLog', backref='plants')
 
-
+    
 # Generating a secret key using the secrets module (not currently used in the code)
 secret_key = secrets.token_hex(32)
 #print(secret_key)
@@ -82,32 +157,12 @@ def login_page():
 # Route for initiating the login process with Google OAuth
 @app.route("/login/google")
 def login():
+    if 'saved_plants' not in session:
+        session['saved_plants'] = []
+        print("create saved plants if user doesn't have")
     authorization_url, state = flow.authorization_url()
     session["state"] = state
     return redirect(authorization_url)
-
-
-@app.route('/add_plant', methods=["POST"])
-@login_is_required
-def add_plant():
-    #Get plant ID from request data
-    plant_id = request.form.get('plant_id')
-   
-    #Here, we'll try to use a session variable to simulate adding
-    # the plant to the user's profile as a test
-    #make sure this plant id is legit
-    if plant_id:
-        if 'saved_plants' not in session:
-            session['saved_plants'] = []
-           
-        # check if if plant is already in users saved plants
-        if plant_id not in session['saved_plants']:
-            session['saved_plants'].append(plant_id)
-           
-    return redirect(url_for('plant_search'))
-
-
-
 
 @app.route("/callback")
 def callback():
@@ -116,28 +171,20 @@ def callback():
     # In this case, Google's OAuth 2.0 endpoint is where the user is redirected
     # after granting permission to your application.
 
-
-   
-
-
     # Fetch the access token from Google after the user grants permission
     flow.fetch_token(authorization_response=request.url)
-
 
     # Checking if the state returned by Google matches the one stored in the session
     if not session["state"] == request.args["state"]:
         abort(500) # state doesn't match
 
-
     # Obtaining the credentials containing the access token and other information
     credentials = flow.credentials
-
 
     # Create a request session with caching for better performance
     request_session = requests.Session()
     cached_session = CacheControl(request_session)
     token_request = Request(session=cached_session)
-
 
     # Verify the ID token to get user information
     id_info = id_token.verify_oauth2_token(
@@ -152,14 +199,23 @@ def callback():
     session["name"] = id_info.get("name")
     session["email"] = id_info.get("email")
     session["picture"] = id_info.get("picture") 
-    print(id_info)
+    #print(id_info)
     #session["email_adress"] = id_info.get("e")
     user = User.query.filter_by(googleId=session["google_id"]).first()
-    if user: 
-        print("nasklksanflacsknlkasnaksnaskasnlnasflksa")
-        #new_user = User()
-
-
+    # Jackson u were right it's !user cz user alone means that there is something in user, I apologize!!!
+    if not user:
+        print("we create new user") 
+        # wanna make sure we save the data into a db 
+        new_user = User(
+            googleId=session["google_id"], 
+            name=session["name"], 
+            email=session["email"],
+            picture=session["picture"]
+            )
+        db.session.add(new_user)
+        db.session.commit()
+    # if the user has an account we want to restore the previous user data 
+    # if the user has an account, we want to restore the previous user data we'll do this in user_profile and protected area
     # Redirect to the protected area after successful authentication
     return redirect("/protected_area")
 
@@ -171,193 +227,269 @@ def logout():
     session.clear()
     return redirect("/")
 
-
 # Route for the home page
 @app.route("/")
 def home():
     return render_template('home.html')
 
-
 # Route for displaying the protected area after successful login
 @app.route("/protected_area")
-#@login_is_required
+@login_is_required
 def protected_area():
-    return render_template('protected_area.html')
+    # for this dashboard we wanna query by id first then save the plants aft 
+    user = User.query.filter_by(googleId=session["google_id"]).first()
+    if user:
+        saved_plants = user.plants  # Get the plants associated with the user
+    else:
+        saved_plants = []  # Initialize an empty list when the user has no plants
+    #in the return statement, we want to pass the saved_plants into the user template where each column should be accessible 
+    return render_template('protected_area.html', user=user, saved_plants=saved_plants)
 
-
-@app.route('/plant_search', methods=['GET', 'POST'])
+@app.route('/plant_search', methods=['POST', 'GET'])
 def plant_search():
-    output = ''
+    #note you'll get an error whenever you click navbar if u don't specify method
     if request.method == 'POST':
-       
-        # Get the user's search query from the form data
-        plant_name = request.form.get('plant_name')
-        care_level = request.form.get('care_level')
-       
-       
+        plant_name = request.form['plant_name']
+        care_level = request.form['care_level'] 
+        # we perform our search below:
+        
         # response
         response = requests.get('https://perenual.com/api/species-list?key=sk-x2Xs64bb0058c865e1636&q='+plant_name)
 
-
         result = response.json()
         newRes = result['data']
+        
+        #initialize some vars we'll be using later 
         index = 0
-       
-        #test the output in terminal
-        #print("THIS IS THE RESULT: ",result)
-        #print("THIS IS THE DATA SECTION WE WANT FROM RESULT", newRes)
-        #print("/n"*3)
-        #print(newRes)
-       
-        while index < len(newRes):
-            id = newRes[index]['id']
-            idStr = str(id)
-            if care_level != 'N/A':
+        output = None 
+        # if the searcher doesn't care about the care level, we want to output the json as it is 
+        if care_level == 'N/A':
+            output = newRes
+        else: 
+            #otherwise we want to filter the output of newRes to suit the carelevel the user wants
+            #here, we want to use a while loop: 
+            output = []
+            while index < len(newRes):
+                id= newRes[index]['id']
+                idStr = str(newRes[index]['id'])
                 levelResponse = requests.get('https://perenual.com/api/species/details/'+idStr+'?key=sk-x2Xs64bb0058c865e1636')
                 levelResult = levelResponse.json()
-            # print(levelResult['care_level'])
-            # print(care_level, 'ojnslj')
-            # print(care_level==levelResult['care_level'])
+                print(levelResult)
                 if care_level == levelResult["care_level"]:
-                    print(newRes[index]['common_name'])
-                    output += idStr + '\n'
-                    #print(newRes[index]['common_name'])
-                    output += newRes[index]['common_name']
-                    output += '\n'
-                    #print(newRes[index]['scientific_name'])
-                    output += str(newRes[index]['scientific_name'])
-                    output += '\n'
-                    picture = newRes[index]['default_image']
-                    if picture == None:
-                        #print("no_url")
-                        output += 'no url' + '\n'
-                    else:
-                        #print(picture['original_url'])
-                        output += picture['original_url']
-                        output += '\n'
-                    #print()
-                    output += '\n'
-            else:
-                print(newRes[index]['common_name'])
-                output += idStr + '\n'
-                #print(newRes[index]['common_name'])
-                output += newRes[index]['common_name']
-                output += '\n'
-                #print(newRes[index]['scientific_name'])
-                output += str(newRes[index]['scientific_name'])
-                output += '\n'
-                picture = newRes[index]['default_image']
-                if picture == None:
-                    #print("no_url")
-                    output += 'no url' + '\n'
-                else:
-                    #print(picture['original_url'])
-                    output += picture['original_url']
-                    output += '\n'
-                #print()
-                output += '\n'
-            index += 1
-        #return render_template('plant_search.html', name=output)
-       
-        print(output)
-        print("/n".split(output))
-        # For demonstration purposes, let's print the search parameters.
-        if plant_name:
-            print('Search by Name:', plant_name)
-        if care_level:
-            print('Search by Care Level:', care_level)
+                    # here we get the result from using that exact id to search if it's care_level matches the users wants:
+                    print(levelResult)
+                    output.append(levelResult)
+                #Increase idx so that we don't enter infinite while loop
+                index += 1
+        return render_template('plant_search.html', plant_name=plant_name, care_level=care_level, search_results=output)
+    return render_template('plant_search.html')
 
+@app.route('/plant_details/<int:plant_id>', methods=['POST', 'GET'])
+def plant_details(plant_id):
+    # Get specific plant details using plant_id
+    response = requests.get(f'https://perenual.com/api/species/details/{plant_id}?key=sk-x2Xs64bb0058c865e1636')
+    plant_details = response.json()
+    return render_template('plant_details.html', plant=plant_details)
 
-   
-        # we'll put our json into a list of plants as search_results.
-        search_results = [
-            {plant_name: care_level}
-        ]
-
-
-        # Return the search_results to the template for displaying the results.
-        return render_template('plant_search.html', search_results=search_results, name=output)
-
-
-    # If it's a GET request, we render the plant_search.html template.
-    return render_template('plant_search.html', name=output)
-
-
-
-
+# drum roll ---- we might just finally add these plants! 
+@app.route('/add_plant', methods=["POST"])
+@login_is_required
+def add_plant():
+    #check if the user is logged in
+    #retrieve form data 
+    plant_id = request.form.get('plant_id')
+    common_name = request.form.get('common_name')
+    scientific_name = request.form.get('scientific_name')
+    nickname = request.form.get('nickname')  # Add other fields for the data you want to add to the database
+    other_names = request.form.get('other_names')
+    family = request.form.get('family')
+    origin = request.form.get('origin')
+    plant_type = request.form.get('plant_type')
+    dimension = request.form.get('dimension')
+    dimensions = request.form.get('dimensions')
+    cycle = request.form.get('cycle')
+    watering = request.form.get('watering')
+    depth_water_requirement = request.form.get('depth_water_requirement')
+    volume_water_requirement = request.form.get('volume_water_requirement')
+    watering_period = request.form.get('watering_period')
+    watering_general_benchmark = request.form.get('watering_general_benchmark')
+    default_image_url = request.form.get('default_image_url')
+    propagation = request.form.get('propagation')
+    maintenance = request.form.get('maintenance')
+    care_level = request.form.get('care_level')
+    care_guides = request.form.get('care_guides')
+    pruning_month = request.form.get('pruning_month')
+    pruning_count = request.form.get('pruning_count')
+    seeds = request.form.get('seeds')
+    flowering_season = request.form.get('flowering_season')
+    flowering_color = request.form.get('flowering_color')
+    cones = request.form.get('cones')
+    fruits = request.form.get('fruits')
+    edible_fruit = request.form.get('edible_fruit')
+    edible_leaf = request.form.get('edible_leaf')
+    medicinal = request.form.get('medicinal')
+    poisonous_to_humans = request.form.get('poisonous_to_humans')
+    poisonous_to_pets = request.form.get('poisonous_to_pets')
+    description = request.form.get('description')
+    hardiness_min = request.form.get('hardiness_min')
+    hardiness_max = request.form.get('hardiness_max')
+    hardiness_map = request.form.get('hardiness_map')
+    soil = request.form.get('soil')
+    
+    # we wanna check if the plant with that given id already exists for the user
+    user = User.query.filter_by(googleId=session["google_id"]).first()
+    #in the case where the user isn't found we want to throw an error
+    if not user:
+        return "User not found!", 404
+    #I predict this might cause problems in that if the db is deleted and someone has cache or cookies 
+    # they might log in but their info might not be added>>>>or do we acc for tt?
+    # we won't find their info and an error will be thrown 
+    
+    
+    existing_plant = UsersPlants.query.filter_by(user=user,plant_id=plant_id).first()
+    
+    if existing_plant:
+        # if the plant already exists we can choose to update it's data or throw error
+        if nickname:
+            existing_plant.nickname = nickname 
+        # we hope this update feature works, but if not, we have backup
+        try:
+            db.session.commit()
+            return redirect("/user_profile")
+        except Exception as e:
+            #find way to handle errors or log error for debug purposes 
+            # also want to undo changes made : might wanna make a def function for this 
+            db.session.rollback()
+            return "Error: Failed to update. Try again.", 500
+    else:
+        # Create a new UsersPlants object and add it to the database
+        new_plant = UsersPlants(
+            plant_id=plant_id,
+            common_name=common_name,
+            scientific_name=scientific_name,
+            nickname=nickname,  # Add other fields for the data you want to add to the database
+            other_names=other_names,
+            family=family,
+            origin=origin,
+            plant_type=plant_type,
+            dimension=dimension,
+            dimensions=dimensions,
+            cycle=cycle,
+            watering=watering,
+            depth_water_requirement=depth_water_requirement,
+            volume_water_requirement=volume_water_requirement,
+            watering_period=watering_period,
+            watering_general_benchmark=watering_general_benchmark,
+            default_image_url=default_image_url,
+            propagation=propagation,
+            maintenance=maintenance,
+            care_level=care_level,
+            care_guides=care_guides,
+            pruning_month=pruning_month,
+            pruning_count=pruning_count,
+            seeds=seeds,
+            flowering_season=flowering_season,
+            flowering_color=flowering_color,
+            cones=cones,
+            fruits=fruits,
+            edible_fruit=edible_fruit,
+            edible_leaf=edible_leaf,
+            medicinal=medicinal,
+            poisonous_to_humans=poisonous_to_humans,
+            poisonous_to_pets=poisonous_to_pets,
+            description=description,
+            hardiness_min=hardiness_min,
+            hardiness_max=hardiness_max,
+            hardiness_map=hardiness_map,
+            soil=soil
+        )   
+        # #User.plants.append(new_plant)
+        # db.session.add(new_plant)
+        
+        # #make sure we don't lose this info we've stored
+        # db.session.commit()
+        # Add the new plant to the user's list of plants
+        user.plants.append(new_plant)
+        # we hope this update feature works, but if not, we have backup
+        try:
+            db.session.commit()
+            return redirect("/user_profile")
+        except Exception as e:
+            #find way to handle errors or log error for debug purposes 
+            db.session.rollback()
+            return "Error: Failed to update. Try again.", 500
+    
+        return redirect("/user_profile")    
+    
+    
 @app.route('/user_profile')
+@login_is_required
 def user_profile():
     # Render the user_profile.html template for the user profile page
-    return render_template('user_profile.html')
+    # the google id is our  helper thruout
+    # for this dashboard we wanna query by id first then save the plants aft 
+    user = User.query.filter_by(googleId=session["google_id"]).first()
+    if user:
+        saved_plants = user.plants  # Get the plants associated with the user
+    else:
+        saved_plants = []  # Initialize an empty list when the user has no plants
+    return render_template('user_profile.html', user=user, saved_plants=saved_plants)
 
+@app.route('/plant_write', methods=['POST', 'GET'])
+def plant_write():
+    if request.method == 'POST':
+    # Render the plant_diary.html template for the plant diary page
+        title = request.form.get('title')
+        date = request.form.get('date') 
+        notes = request.form.get('notes')
+
+        new_note = PlantLog(title=title,
+                            date=date,
+                            notes=notes)
+
+        user = User.query.filter_by(googleId=session["google_id"]).first()
+        user.log.append(new_note)
+        db.session.commit()
+    
+    return render_template('plant_write.html')
 
 @app.route('/plant_diary')
 def plant_diary():
-    # Render the plant_diary.html template for the plant diary page
-    return render_template('plant_diary.html')
+    
+    user = User.query.filter_by(googleId=session["google_id"]).first()
+    if user:
+        saved_notes = user.log  # Get the plants associated with the user
+    else:
+        saved_notes = []  # Initialize an empty list when the user has no plants
+    return render_template('plant_diary.html', user=user, saved_notes=saved_notes)
 
+@app.route('/diary_delete/<int:log_id>')
+def diary_delete(log_id):
+    deleted_log = PlantLog.query.get_or_404(log_id)
+    db.session.delete(deleted_log)
+    db.session.commit()
+    
+    return redirect('/plant_diary')
+
+@app.route('/open_note/<int:log_id>')
+def open_diary(log_id):
+    opened_log = PlantLog.query.get_or_404(log_id)
+    
+    
+    return render_template('/open_note.html', note=opened_log)
 
 @app.route('/plant_simulation')
 def plant_simulation():
     # Render the plant_simulation.html template for the plant simulation page
     return render_template('plant_simulation.html')
 
-
-@app.route('/plant_recommendations')
-def plant_recommendations():
-    # Get the user's search query from the form data
-        plant_name = request.form.get('plant_name')
-        care_level = request.form.get('care_level')
-       
-        # response
-        response = requests.get('https://perenual.com/api/species-list?key=sk-L9aC64b73122e37dc1596&q='+plant_name)
-
-
-        result = response.json()
-        newRes = result['data']
-        index = 0
-        output = ''
-
-
-        while index < len(newRes):
-            id = newRes[index]['id']
-            #print(id)
-           
-            idStr = str(id)
-            output += idStr + '\n'
-            #print(newRes[index]['common_name'])
-            output += newRes[index]['common_name']
-            output += '\n'
-            #print(newRes[index]['scientific_name'])
-            output += str(newRes[index]['scientific_name'])
-            output += '\n'
-            picture = newRes[index]['default_image']
-            if picture == None:
-                #print("no_url")
-                output += 'no url' + '\n'
-            else:
-                #print(picture['original_url'])
-                output += picture['original_url']
-                output += '\n'
-            #print()
-            output += '\n'
-            index += 1
-
-
-        # Return the search_results to the template for displaying the results.
-        return render_template('plant_search.html', name=output)
-
-
 @app.route('/error')
 def error():
     # Render the error.html template for the error page
     return render_template('error.html')
 
-
-
 with app.app_context():
     db.create_all()
-
 
 if __name__ == "__main__":
     # Override the OAUTHLIB_INSECURE_TRANSPORT variable for local development
