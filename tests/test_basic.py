@@ -1,6 +1,6 @@
 import unittest, sys
 
-#sys.path.append('../FlaskWebProject1') # imports python file from parent directory
+sys.path.append('../PlantsOnDemand') # imports python file from parent directory
 from app import app #imports flask app object
 
 class BasicTests(unittest.TestCase):
