@@ -1,74 +1,72 @@
+@import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700&family=Open+Sans:wght@400;700&display=swap');
+
 body {
     margin: 0;
     padding: 0;
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    line-height: 1.6;
+    background-color: #f6f5ee;
+    color: #043927;
 }
 
-/* Circular motion for the profile picture user profile */
-.profile-section {
-    text-align: center;
-    margin-top: 20px;
+h1, h2, h3, h4, h5, h6 {
+    font-family: 'Playfair Display', serif;
+    color: #AA8B56;
 }
 
-.profile-picture-container {
-    display: inline-block;
-    border-radius: 50%;
-    overflow: hidden;
-}
-
-.profile-picture {
-    width: 150px;
-    height: 150px;
-    object-fit: cover;
-}
-
-/* Grid layout styles */
 .container {
     padding: 20px;
 }
 
-.row {
-    margin: 0 -15px;
+.home-header {
+    text-align: center;
+    margin-bottom: 30px;
+    padding-top: 50px;
+    background-image: url('header.jpg');
+    background-size: cover;
+    background-position: center center;
 }
 
-.col-md-6 {
-    padding: 0 15px;
+.home-content {
+    text-align: justify;
+    text-justify: inter-word;
+    background-color: #fff;
+    padding: 20px;
+    border-radius: 5px;
+    box-shadow: 0 0 10px rgba(0,0,0,0.1);
 }
 
-.plant-grid {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-}
-
-/* Navbar styles */
-#nav-color {
-    color: forestgreen; /* Replace "forestgreen"  */
-}
 .navbar {
-    background-color: forestgreen ;
+    background-color: #043927;
 }
 
 .navbar-brand {
-    font-size: 30px;
+    font-family: 'Playfair Display', serif;
+    font-size: 28px;
+    color: #f6f5ee;
 }
 
 .navbar-nav .nav-item .nav-link {
-    
-}
-
-.navbar navbar-expand-lg navbar-light bg-light{
-    color: #228B22
+    font-family: 'Open Sans', sans-serif;
+    font-size: 16px;
+    color: #f6f5ee;
 }
 
 .navbar-nav .nav-item .nav-link:hover {
-    
+    color: #AA8B56;
 }
 
-/* Plant card styles */
 .card {
-    
-    border: 1px solid #AA8B56;
-    box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+    border: none;
+    background-color: #fff;
+    box-shadow: 0 0 15px rgba(0,0,0,0.1);
+    transition: box-shadow 0.3s ease-in-out, transform 0.3s ease-in-out;
+}
+
+.card:hover {
+    box-shadow: 0 0 25px rgba(0,0,0,0.2);
+    transform: scale(1.05);
 }
 
 .card-img-top {
@@ -83,47 +81,28 @@ body {
 }
 
 .card-title {
-    font-size: 20px;
-    margin-bottom: 8px;
+    font-size: 24px;
+    color: #043927;
 }
 
 .card-text {
-    font-size: 14px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
+    font-size: 16px;
+    color: #333;
 }
 
-/* Plant Timeline and Plant Diaries styles */
-/* ... (styles for these sections) */
-
-/* Footer styles */
-.footer {
-    
-    
-    padding: 10px 0;
+/* Footer Styles */
+footer {
+    padding: 20px;
+    background-color: #043927;
+    color: #f6f5ee;
     text-align: center;
-    position: fixed;
-    left: 0;
-    bottom: 0;
-    width: 100%;
+    font-size: 14px;
 }
 
-.footer a {
-    
+footer a {
+    color: #f6f5ee;
 }
 
-.footer a:hover {
-    
-}
-
-/* Responsive styles */
-@media (max-width: 768px) {
-    .plant-grid {
-        justify-content: center;
-    }
-
-    .col-md-6 {
-        flex-basis: 100%;
-    }
+footer a:hover {
+    color: #AA8B56;
 }

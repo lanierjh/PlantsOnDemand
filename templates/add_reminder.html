@@ -19,6 +19,7 @@
         <div class="form-group" id="day_select" style="display: none;">
             <label for="reminder_day">Select Day:</label>
             <select name="reminder_day" id="reminder_day" class="form-control">
+                <option value="default_if_none">None</option>
                 <option value="monday">Monday</option>
                 <option value="tuesday">Tuesday</option>
                 <option value="wednesday">Wednesday</option>
@@ -33,6 +34,8 @@
             <label for="reminder_time">Preferred Time:</label>
             <input type="time" name="reminder_time" id="reminder_time" class="form-control">
         </div>
+        <!-- Add the hidden input field to store the user's time zone we'll need this for the create_google_calendar_event -->
+        <input type="hidden" name="user_time_zone" id="user_time_zone" value="">
         <button type="submit" class="btn btn-primary">Set Reminder</button>
     </form>
 </div>
@@ -45,6 +48,11 @@
     reminderFrequencySelect.addEventListener("change", function () {
         const selectedFrequency = reminderFrequencySelect.value;
         daySelectDiv.style.display = selectedFrequency === "weekly" ? "block" : "none";
+    });
+    // Get the user's time zone and set it in the hidden input field for the create_google_calendar_event
+    document.addEventListener('DOMContentLoaded', function () {
+        const userTimeZone = Intl.DateTimeFormat().resolvedOptions().timeZone; //this helps us a lot!
+        document.getElementById('user_time_zone').value = userTimeZone; 
     });
 </script>
 {% endblock %}
