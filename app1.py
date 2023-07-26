@@ -20,7 +20,10 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
-
+from google.auth.transport.requests import Request
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+from datetime import datetime, timedelta
 
 # Creating a Flask application instance
 app = Flask(__name__)
@@ -92,6 +95,11 @@ class UsersPlants(db.Model):
     reminder_frequency = db.Column(db.String(50))
     reminder_time = db.Column(db.String(10))
     reminder_day = db.Column(db.String(20))
+    # Add the 'access_token' column to the table to allow us to store Google calendar access token for each plant 
+    # it is required to create a Google Calendar event for plant reminder
+    access_token = db.Column(db.String(250))
+    refresh_token = db.Column(db.String(250))
+
 
     #this is a very good dataset, if we wanted to expand on this we could use the fields abv
     # as somewhat of a filter
@@ -194,7 +202,11 @@ def callback():
     session["name"] = id_info.get("name")
     session["email"] = id_info.get("email")
     session["picture"] = id_info.get("picture") 
-    #print(id_info)
+    # we need to save the credentials to session for later user in add_plant()
+    session["credentials"] = {
+        "access_token": credentials.token,
+        "refresh_token": credentials.refresh_token,
+    }
     #session["email_adress"] = id_info.get("e")
     user = User.query.filter_by(googleId=session["google_id"]).first()
     # Jackson u were right it's !user cz user alone means that there is something in user, I apologize!!!
@@ -361,6 +373,19 @@ def add_plant():
     # they might log in but their info might not be added>>>>or do we acc for tt?
     # we won't find their info and an error will be thrown 
     
+    # We also need to check if the user has authenticated with Google Calendar
+    # and get the access_token and refresh_token from the credentials
+       # We also need to check if the user has authenticated with Google Calendar
+    # and get the access_token and refresh_token from the credentials
+    if "credentials" in session:
+        credentials_data = session["credentials"]
+        access_token = credentials_data["access_token"]
+        refresh_token = credentials_data["refresh_token"]
+    else:
+        # case when the user hasn't authenticated with Google Calendar
+        access_token = None
+        refresh_token = None
+
     
     existing_plant = UsersPlants.query.filter_by(user=user,plant_id=plant_id).first()
     
@@ -417,7 +442,9 @@ def add_plant():
             hardiness_min=hardiness_min,
             hardiness_max=hardiness_max,
             hardiness_map=hardiness_map,
-            soil=soil
+            soil=soil,
+            access_token=access_token,
+            refresh_token=refresh_token 
         )   
         # #User.plants.append(new_plant)
         # db.session.add(new_plant)
@@ -431,11 +458,71 @@ def add_plant():
             db.session.commit()
             return redirect("/protected_area")
         except Exception as e:
-            #find way to handle errors or log error for debug purposes 
+            #way to handle errors or log error for debug purposes 
             db.session.rollback()
             return "Error: Failed to update. Try again.", 500
     
-        return redirect("/protected_area")    
+    return redirect("/protected_area")    
+
+from datetime import datetime, timedelta
+from google.oauth2.credentials import Credentials
+from googleapiclient.discovery import build
+
+from googleapiclient.errors import HttpError
+
+def create_google_calendar_event(plant, event_data, user_timezone):
+    print(user_timezone)
+    # Check if the access token is expired
+    credentials = Credentials(
+        token=plant.access_token,
+        refresh_token=plant.refresh_token,
+        token_uri=flow.client_config['token_uri'],
+        client_id=flow.client_config['client_id'],
+        client_secret=flow.client_config['client_secret']
+    )
+
+    if credentials.expired:
+        # Refresh the access token
+        credentials.refresh(Request())
+
+        # Update the plant's access token with the new one
+        plant.access_token = credentials.token
+        db.session.commit()
+
+    # Create a service object to interact with the Google Calendar API
+    service = build('calendar', 'v3', credentials=credentials)
+
+    # Prepare the start and end date and time for the event
+    start_datetime = datetime.now()
+    end_datetime = start_datetime + timedelta(days=30)  # The reminder will stop a month later
+
+    # Format the date and time strings as required by the Google Calendar API (in ISO 8601 format)
+    start_time_str = start_datetime.strftime('%Y-%m-%dT%H:%M:%S')
+    end_time_str = end_datetime.strftime('%Y-%m-%dT%H:%M:%S')
+
+    # Create the event
+    event = {
+        'summary': f'Watering Reminder for {plant.common_name}',
+        'description': f'Remember to water your {plant.common_name} plant.',
+        'start': {
+            'dateTime': start_time_str,
+            'timeZone': user_timezone,
+        },
+        'end': {
+            'dateTime': end_time_str,
+            'timeZone': user_timezone,
+        },
+    }
+    print(event)
+    try:
+        # Set the 'calendarId' to 'primary' to create the event in the user's primary calendar
+        event = service.events().insert(calendarId='primary', body=event).execute()
+        return event
+    except HttpError as e:
+        # Handle the case when there is an HTTP error, such as missing time zone definition
+        error_details = e._get_reason() if hasattr(e, '_get_reason') else str(e)
+        return f"Error creating event: {error_details}"
+
 
 
 @app.route('/add_reminder/<int:plant_id>', methods=['POST', 'GET'])
@@ -446,32 +533,83 @@ def add_reminder(plant_id):
     plant = UsersPlants.query.filter_by(user=current_user, plant_id=plant_id).first()
 
     if not plant:
-        # Handle the case when the plant with the given plant_id is not found just in case, but wedon't anticipate this hpning 
+        # Handle the case when the plant with the given plant_id is not found
         return render_template('error.html', error_message="Plant not found")
 
     if request.method == 'POST':
         # Retrieve the form data for reminder preferences
         reminder_frequency = request.form['reminder_frequency']
         reminder_time = request.form['reminder_time']
-
+        user_timezone = "America/New_York"
+        
+        print(user_timezone)
+        
         if reminder_frequency == 'weekly':
             # If the reminder is set to "Weekly," retrieve the selected day from the form
-            reminder_day = request.form['reminder_day']
+            reminder_day = request.form.get('reminder_day')
+            # Check if the user selected a day, if not, set reminder_day to None
+            if not reminder_day or reminder_day == 'default_if_none':
+                plant.reminder_day = None
+            else:
+                plant.reminder_day = reminder_day
+
             # Update the plant's reminder preferences for weekly reminders
             plant.reminder_frequency = reminder_frequency
-            plant.reminder_day = reminder_day
             plant.reminder_time = reminder_time
         else:
-            # For daily  reminders, only update frequency and time
+            # For daily reminders, only update frequency and time
             plant.reminder_frequency = reminder_frequency
             plant.reminder_time = reminder_time
 
         # Commit changes to the database
         db.session.commit()
+
+        # Prepare the event data for creating the Google Calendar event
+        event_data = create_event_data(plant, user_timezone)
+
+        # Call the create_google_calendar_event function to add the reminder to the user's Google Calendar
+        # Pass the plant object and the event_data to the function
+        create_google_calendar_event(plant, event_data, user_timezone)
+
         # Redirect to the user profile page or any other appropriate page
         return redirect("/protected_area")
 
     return render_template('add_reminder.html', plant=plant)
+
+def create_event_data(plant, user_timezone):
+    print(user_timezone)
+    event_data = {}
+
+    # Get current date and time
+    current_datetime = datetime.now()
+
+    # Calculate the end date by adding one month to the current date using timedelta
+    end_datetime = current_datetime + timedelta(days=30)
+
+    # Format dates in the required format (YYYY-MM-DDTHH:mm:00) e.g., 2023-07-23T10:30:00
+    start_datetime_str = current_datetime.strftime("%Y-%m-%dT%H:%M:00")
+    end_datetime_str = end_datetime.strftime("%Y-%m-%dT%H:%M:00")
+
+    # Check if the reminder is set to "Weekly"
+    if plant.reminder_frequency == "weekly":
+        # Make sure the reminder_day is not empty
+        if plant.reminder_day:
+            # Add the day and time to the event_data for a weekly reminder
+            event_data['start_datetime'] = start_datetime_str
+            event_data['end_datetime'] = end_datetime_str
+            event_data['recurrence'] = [
+                f"RRULE:FREQ=WEEKLY;BYDAY={plant.reminder_day.upper()}"
+            ]
+        else:
+            # If the reminder_day is not set, we will fallback to a daily reminder
+            event_data['start_datetime'] = start_datetime_str
+            event_data['end_datetime'] = end_datetime_str
+    else:
+        # For daily reminders, just use the reminder_time and date for a single event
+        event_data['start_datetime'] = start_datetime_str
+        event_data['end_datetime'] = end_datetime_str
+
+    return event_data
 
 @app.route('/plant_diary')
 def plant_diary():
