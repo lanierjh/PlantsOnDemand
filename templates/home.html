@@ -1,21 +1,10 @@
-<!-- home.html -->
 {% extends "layout.html" %}
 
-{% block title %}Plant Care App{% endblock %}
+{% block title %}PlantsOnDemand{% endblock %}
 
 {% block content %}
     <div class="container">
-        {% if session['google_id'] %}
-            <!-- Show this content if the user is signed in -->
-            <h1>Hello {{ session['name'] }}!</h1>
-            <p>Welcome to your dashboard. You can now access the following pages:</p>
-            
-            <!--<a href="/signout" class="btn btn-primary">Logout</a>-->
-        {% else %}
-            <!-- Show this content if the user is not signed in -->
-            <h1>Welcome to the Plant Care App</h1>
-            <p>Please sign in to access all the features.</p>
-            <!--<a href="{{ url_for('login_page') }}" class="btn btn-primary">Login with Google</a>-->
-        {% endif %}
+        <h1 id="header">Welcome to PlantsOnDemand!</h1>
+        <p id="content-text">Embark on your botany journey and evolve into an awesome plant caretaker. Our platform simplifies your plant parenting journey, catering to both novices and experts. Discover the perfect plants for your space using our comprehensive Plant Search, and gain in-depth knowledge about your leafy companions. Monitor your plants' growth, health and care needs with our Plant Diary. Discover more green companions with our tailored Plant Recommendations. Learn plant care through our interactive Plant Simulation exercises. Quick and secure access is at your fingertips with Google sign-in. Join our thriving community today and commence your green journey!</p>
     </div>
 {% endblock %}

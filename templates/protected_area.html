@@ -2,6 +2,7 @@
 
 {% block content %}
     <div class="container">
+        <h1>Welcome, {{ session['name'] }}!</h1>        
         <div class="row">
             <!-- Plant Grid (Half of the page) -->
             <div class="col-md-6">
@@ -9,11 +10,8 @@
             </div>
             <!-- Plant Timeline and Plant Diaries (Half of the page) -->
             <div class="col-md-6">
-
-                {% include "plant_timeline.html" %}
-
-              
-                {% include "plant_diaries.html" %}
+                <p>Here's your Plants Dashboard, where you can manage all your leafy companions in one place. Click on a plant to set up or manage your watering reminders. Explore the Plant Diaries by viewing it for details. If you're ready to expand your green family, don't forget to visit our Plant Search to find your next leafy companion. Happy gardening!</p>
+            
             </div>
         </div>
     </div>
