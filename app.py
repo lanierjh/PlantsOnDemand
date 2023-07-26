@@ -453,7 +453,7 @@ def add_plant():
         # we hope this update feature works, but if not, we have backup
         try:
             db.session.commit()
-            return redirect("/user_profile")
+            return redirect("/protected_area")
         except Exception as e:
             #find way to handle errors or log error for debug purposes 
             db.session.rollback()
@@ -666,6 +666,40 @@ def plant_simulation():
 def error():
     # Render the error.html template for the error page
     return render_template('error.html')
+
+@app.route('/page')
+def page():
+    return render_template('page.html')
+
+@app.route('/api/water', methods=['POST'])
+def water_plant():
+    # global plant_health
+    data = request.get_json()
+    plant_health = data.get('plant_health', 100)
+    plant_health += 10 
+    if plant_health > 100: 
+        plant_health = 100
+    return jsonify({'plant_health': plant_health})
+
+@app.route('/api/sunlight', methods=['POST'])
+def give_sunlight():
+    # global plant_health
+    data = request.get_json()
+    plant_health = data.get('plant_health', 100)
+    plant_health += 10
+    if plant_health > 100: 
+        plant_health = 100
+    return jsonify({'plant_health': plant_health})
+
+@app.route('/api/fertilize', methods=['POST'])
+def give_fertilizer():
+    # global plant_health
+    data = request.get_json()
+    plant_health = data.get('plant_health', 100)
+    plant_health += 15
+    if plant_health > 100: 
+        plant_health = 100
+    return jsonify({'plant_health': plant_health})
 
 with app.app_context():
     db.create_all()
