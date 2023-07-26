@@ -42,9 +42,9 @@
 
     #plantDead {
             padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: #fff;
+            font-size: 30px;
+            color: #333;
+
             cursor: pointer;
             margin: 5px;
             top: 15px;
@@ -110,7 +110,8 @@
   width: 400px;
   height: 400px;
   overflow: hidden;  
-    position: relative;   
+position: relative;   
+display: block;
 
 
 }
@@ -129,6 +130,13 @@ top: 15%;
 left: 50%;  
 transform: translate(-50%, -50%);
 
+}
+
+#witheredImage {
+    width: 450px; 
+    height: 350px;
+    display: none;
+    margin-top: 550px;
 }
 
 
@@ -317,7 +325,7 @@ transform: translate(-50%, -50%);
        <img src="static/images/drop.png" alt="Water" id="waterButton" onclick="waterPlant()">
             <img src="static/images/sun.png" class ="sunlight" id="sunlightButton" onclick="giveSunlight()">
             <img src ="static/images/scis.png "  class = "scis" id="fertilizeButton" onclick="giveFertilizer()">
-
+  <img src="{{ url_for('static', filename = 'images/dead.png') }}" id="witheredImage" style="display: none;">
             </div>
             
             <button class="btn" id="plantDead">Plant Withered</button>
@@ -374,10 +382,15 @@ transform: translate(-50%, -50%);
                 document.getElementById('plantDead').hidden = false;
                 document.getElementById('message').hidden = true;
                 document.getElementById('playAgainButton').hidden = false;
+    document.getElementById('plantImage').style.display = 'none';
+                document.getElementById('witheredImage').style.display = 'block';
             } else {
                 document.getElementById('plantDead').hidden = true;
                 document.getElementById('plant').style.backgroundColor = disabled;
-           
+
+ document.getElementById('plantImage').style.display = 'block';
+    document.getElementById('witheredImage').style.display = 'none';
+
             }
 
        
@@ -417,7 +430,7 @@ function updateDay() {
             }
 
 
-    if (day > lastDay) {
+    if (day > lastDay || plantHealth <= 0) {
         clearInterval(dayInterval);
         if (plantHealth > 0) {
 
@@ -521,6 +534,8 @@ function giveFertilizer() {
             }
         }
 
+        let dead = document.getElementById('witheredImage'); 
+
         function playAgain() {
 
             plantHealth = 100; 
@@ -529,12 +544,13 @@ function giveFertilizer() {
             clearInterval(dayInterval);
             updateDayCounter();
             dayInterval = setInterval(updateDay, 9000);
-
-
-          
+   
+   
             const waterButton = document.getElementById('waterButton');
 
             waterButton.addEventListener('click', startAnimation);
+            witheredImage.style.display = 'none';
+            document.getElementById('plantImage').style.display = 'block';
             document.getElementById('message').hidden = true;
             document.getElementById('waterButton').disabled = false;
             document.getElementById('sunlightButton').disabled = false;
@@ -546,9 +562,10 @@ function giveFertilizer() {
           /*  document.getElementById('plant').style.backgroundColor = 'green'; */
             document.getElementById('playAgainButton').hidden = true;
             document.getElementById('plant').style.backgroundColor = disabled; 
-
-            updatePlantHealth();
-            updateDay();
+            
+           updatePlantHealth();
+            updateDay();  
+       
 
             
        
@@ -559,7 +576,7 @@ function giveFertilizer() {
                 plantHealth -= 5;
                 updatePlantHealth();
             }
-        }, 5000); 
+        }, 500); 
 
           function playSunlightAnimation() {  
                     const sunlightButton = document.getElementById('sunlightButton');
