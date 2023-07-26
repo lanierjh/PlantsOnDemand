@@ -96,7 +96,7 @@ If you have any questions or inquiries, please feel free to contact us:
 
 - Jackson Larnier: jackson.h.lanier@vanderbilt.edu
 - Vimbisai Basvi: basvi.vimbisai@gmail.com
-- Nana: nadu1900@gmail.com
+- Nana Nyanor: nadu1900@gmail.com
 
 ---
 
