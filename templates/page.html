@@ -43,14 +43,20 @@
 
 
     #plantDead {
-            padding: 10px 20px;
-            font-size: 30px;
-            color: #333;
-
-            cursor: pointer;
-            margin: 5px;
-            top: 15px;
+            padding: 20px;
+          font-size: 48px;
+          color: #333;
+          cursor: pointer;
+          margin: 5px;
+          position: absolute;
+          top: 150px; /* Adjust the value to make it higher up */
+          left: 50%;
+          transform: translateX(-50%);
+          background-color: rgba(255, 0, 0, 0.7);
+          border-radius: 20px;
+          text-align: center;
         }
+
         #health {
             font-size: 24px;
             font-weight: bold;
@@ -123,7 +129,19 @@ position: fixed;
  top: 10%;  
  left: 50%;  
  transform: translate(-50%, -50%);
+ background-color: lightpink; 
+  border: none; 
+padding: 10px 20px; 
+ font-size: 24px;  
+ color: white;  
+cursor: pointer; 
+border-radius: 10px;
+ box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 }
+
+#playAgainButton:hover {
+    background-color: #ffa8c0;
+  }
 
 #message {
 position: fixed; 
@@ -240,6 +258,18 @@ transform: translate(-50%, -50%);
     border-radius: 5px;
 }
 
+.top-leftfr {
+    position: absolute;
+    top: 10px;
+    left: 0px;
+    font-size: 16px;
+    font-weight: bold;
+    color: white;
+    background-color: rgba(0, 0, 0, 0.7);
+    padding: 5px 10px;
+    border-radius: 5px;
+}
+
        .sunlight {
             width: 100px;
             height: 100px;
@@ -332,6 +362,7 @@ transform: translate(-50%, -50%);
     <main>
 
      <div class="container">
+        <a class="nav-link top-leftfr" id="nav-links" href="{{ url_for('protected_area_decorated') }}">Home</a>
       
           
      
@@ -347,7 +378,7 @@ transform: translate(-50%, -50%);
   <img src="{{ url_for('static', filename = 'images/dead.png') }}" id="witheredImage" style="display: none;">
             </div>
             
-            <button class="btn" id="plantDead">Plant Withered</button>
+            <button class="bigBubbleLetters" id="plantDead">uh oh... you lose</button>
 
             <button class = "btn" id="playAgainButton" onclick="playAgain()">Play Again</button>
             <p id="health">Plant Health: 100%</p>
