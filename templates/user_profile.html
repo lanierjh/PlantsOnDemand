@@ -17,7 +17,6 @@
     <div>
         <!--Probably add margins to top and bottom so that the page layout isn't cluttered but well spaced-->
         <h4>Account Settings</h4>
-        <form action="/update_profile" method="post" class="row">
             <!-- Add form fields for updating account settings here -->
             <!--You need to complete server-side for this-->
             <div class="col-md-6">
@@ -27,17 +26,12 @@
             
             <div class="col-md-6">
                 <label for="email" class="form-label"><strong>Email:</strong></label>
-                <input type="email" id="email" name="email" value="{{ user.email }}" class="form-control">
+                <input type="email" id="email" name="email" value="{{ user.email }}" class="form-control" disabled>
             </div>
 
             <div class="col-md-12">
                 <label for="profile_picture" class="form-label"><strong>Profile Picture URL:</strong></label>
                 <input type="text" id="profile_picture" name="profile_picture" value="{{ user.picture }}" class="form-control">
             </div>
-
-            <div class="col-md-12 mt-3"> <!--this might be too big -->
-                <button type="submit" class="btn btn-primary">Update Profile</button>
-            </div>
-        </form>
     </div>
 {% endblock %}
