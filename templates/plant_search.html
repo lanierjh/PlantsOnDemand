@@ -1,3 +1,4 @@
+<!--modified and complete-->
 {% extends "layout.html" %}
 
 {% block title %}
@@ -24,31 +25,29 @@ Plant Search 2
                     </select>
                 </div>
             </div>
-            <input type="submit" value="Search" class="btn btn-primary mt-3">
+            <input type="submit" value="Search" class="btn btn-accent mt-3">
         </form>
         
         <!-- check whether plant name var is defined and not empty -->
         {% if plant_name and care_level %}
         <div class="result mt-5"> 
             <h2> Search Result: </h2>
-            <p> You searched for plant: {{ plant_name }} and care_level: {{care_level}} </p>
+            <!--<p> You searched for plant: {{ plant_name }} and care_level: {{care_level}} </p>-->
             <!--<p>{{search_results}}</p>-->
             <div class="row">
                 {% for plant in search_results%}
                     <!--help create 3 equal width sized columns-->
                     <div class="col-md-4 mb-3">
                         <!--create small plant cards-->
-                        <div class="plant-card border p-3" onclick="viewPlantDetails({{ plant.id }})"> <!--in next iteration of code add the click event-->
+                        <div class="plant-card border p-3" onclick="viewPlantDetails({{ plant.id }})">
                             <h4>{{plant.common_name}}</h4>
                             <p>{{plant.scientific_name[0]}}</p>
-                            {%if plant.default_image%} <!--shorthand but could also use plant['default_image']['thumbnail'] -->
-                                <img src="{{plant.default_image.original_url}}" alt="{{plant.common_name}} Image" class="img-fluid" style="width: 300px; height: 300px;">
-                                <!--stylistic choice: original image which is clear original_url or thumbnail 3 images or 2?-->
-                                <!--Bad: there might be duplicates - due to databse: bcz we're not technically skilled in bio we can't parse-->
+                            {%if plant.default_image%} 
+                                <img src="{{plant.default_image.original_url}}" alt="{{plant.common_name}} Image" class="img-fluid">
                             {%else%}
                                 <p> No image available </p>
                             {%endif%}
-                        </div>
+                        </div>                        
                     </div>
                 {% endfor%}
             </div>
