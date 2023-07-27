@@ -44,14 +44,13 @@
                     <!-- Add a nickname input field -->
                     <div class="form-group mt-3">
                         <label for="nickname">Nickname:</label>
-                        <input type="text" class="form-control" id="nickname" name="nickname" placeholder="Enter nickname for the plant">
                     </div>
                     <!-- Add Plant section -->
                     <div class="text-center mt-3">
                         <form action="/add_plant" method="POST">
                                 <input type="hidden" name="plant_id" value="{{plant.id}}">
                                 <input type="hidden" name="common_name" value="{{ plant.common_name }}">
-                                <input type="hidden" name="common_name" value="{{ nickname }}">
+                                <input type="text" class="form-control" id="nickname" name="nickname" placeholder="Enter nickname for the plant">
                                 <input type="hidden" name="scientific_name" value="{{ plant.scientific_name[0] }}">
                                 <input type="hidden" name="other_names" value="{{ plant.other_names }}">
                                 <input type="hidden" name="family" value="{{ plant.family }}">
