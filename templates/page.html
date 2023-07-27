@@ -43,9 +43,9 @@
 
     #plantDead {
             padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: #fff;
+            font-size: 30px;
+            color: #333;
+
             cursor: pointer;
             margin: 5px;
             top: 15px;
@@ -111,7 +111,8 @@
   width: 400px;
   height: 400px;
   overflow: hidden;  
-    position: relative;   
+position: relative;   
+display: block;
 
 
 }
@@ -132,6 +133,13 @@ transform: translate(-50%, -50%);
 
 }
 
+#witheredImage {
+    width: 450px; 
+    height: 350px;
+    display: none;
+    margin-top: 550px;
+}
+
 
  /*   #waterButton, #sunlightButton, #fertilizeButton {
     width: 50px;
@@ -149,7 +157,6 @@ transform: translate(-50%, -50%);
   height: 200px;
   margin: auto;
   display: flex;
-
   justify-content: center;
   align-items: center;
 }
@@ -293,7 +300,26 @@ transform: translate(-50%, -50%);
             }
         }
 
+        
+.tips-container {
+    position: absolute;
+    top: 50%;
+    width: 200px; /* Adjust the width as needed */
+    padding: 10px;
+    background-color: rgba(255, 255, 255, 0.8); /* Adjust the background color and transparency */
+    border: 1px solid #ccc; /* Add a border around the tips container */
+    border-radius: 5px;
+    transform: translateY(-50%);
+}
+
  
+.left {
+    left: 0; /* Position the left tips container on the left side */
+}
+
+.right {
+    right: 0; /* Position the right tips container on the right side */
+}
 
 
     </style>
@@ -318,7 +344,7 @@ transform: translate(-50%, -50%);
        <img src="static/images/drop.png" alt="Water" id="waterButton" onclick="waterPlant()">
             <img src="static/images/sun.png" class ="sunlight" id="sunlightButton" onclick="giveSunlight()">
             <img src ="static/images/scis.png "  class = "scis" id="fertilizeButton" onclick="giveFertilizer()">
-
+  <img src="{{ url_for('static', filename = 'images/dead.png') }}" id="witheredImage" style="display: none;">
             </div>
             
             <button class="btn" id="plantDead">Plant Withered</button>
@@ -332,10 +358,14 @@ transform: translate(-50%, -50%);
                  
             </div>
         </div>
-        <div id="gardeningTipContainer" class="tips">
-              <div id="gardeningTip"class="tips"></div>
-        </div>
+     
 
+ <div class="tips-container left" id="leftGardeningTipContainer">
+        <p class="tip-text" id="leftGardeningTip"></p>
+    </div>
+    <div class="tips-container right" id="rightGardeningTipContainer">
+        <p class="tip-text" id="rightGardeningTip"></p>
+    </div>
 
     </main>
   
@@ -375,10 +405,18 @@ transform: translate(-50%, -50%);
                 document.getElementById('plantDead').hidden = false;
                 document.getElementById('message').hidden = true;
                 document.getElementById('playAgainButton').hidden = false;
+    document.getElementById('plantImage').style.display = 'none';
+                document.getElementById('witheredImage').style.display = 'block';
+                document.getElementById('leftGardeningTipContainer').hidden = true; 
+                document.getElementById('rightGardeningTipContainer').hidden = true; 
+
             } else {
                 document.getElementById('plantDead').hidden = true;
                 document.getElementById('plant').style.backgroundColor = disabled;
-           
+
+ document.getElementById('plantImage').style.display = 'block';
+    document.getElementById('witheredImage').style.display = 'none';
+
             }
 
        
@@ -413,12 +451,12 @@ function updateDay() {
     if (day % 5 === 1) {
         updatePlantImage();
     }
-           if (day % 3 === 0) {
+           if (day % 1 === 0) {
                 showGardeningTip();
             }
 
 
-    if (day > lastDay) {
+    if (day > lastDay || plantHealth <= 0) {
         clearInterval(dayInterval);
         if (plantHealth > 0) {
 
@@ -439,7 +477,7 @@ function updateDay() {
 
 }
 
-dayInterval = setInterval(updateDay, 9000);
+dayInterval = setInterval(updateDay, 3000);
 
 
 
@@ -522,6 +560,8 @@ function giveFertilizer() {
             }
         }
 
+        let dead = document.getElementById('witheredImage'); 
+
         function playAgain() {
 
             plantHealth = 100; 
@@ -529,13 +569,17 @@ function giveFertilizer() {
             day = 1;
             clearInterval(dayInterval);
             updateDayCounter();
-            dayInterval = setInterval(updateDay, 9000);
-
-
-          
+            dayInterval = setInterval(updateDay, 3000);
+   
+   
             const waterButton = document.getElementById('waterButton');
-
+ document.getElementById('leftGardeningTipContainer').hidden = false; 
+                document.getElementById('rightGardeningTipContainer').hidden = false; 
             waterButton.addEventListener('click', startAnimation);
+            witheredImage.style.display = 'none';
+                   document.getElementById('plantImage').src = "{{ url_for('static', filename= 'images/5.png') }}";   
+                      document.getElementById('plantImage').style.display = 'block';
+    
             document.getElementById('message').hidden = true;
             document.getElementById('waterButton').disabled = false;
             document.getElementById('sunlightButton').disabled = false;
@@ -548,8 +592,11 @@ function giveFertilizer() {
             document.getElementById('playAgainButton').hidden = true;
             document.getElementById('plant').style.backgroundColor = disabled; 
 
-            updatePlantHealth();
-            updateDay();
+                
+            
+           updatePlantHealth();
+           updateDay();  
+       
 
             
        
@@ -560,7 +607,7 @@ function giveFertilizer() {
                 plantHealth -= 5;
                 updatePlantHealth();
             }
-        }, 5000); 
+        }, 500); 
 
           function playSunlightAnimation() {  
                     const sunlightButton = document.getElementById('sunlightButton');
@@ -578,37 +625,66 @@ function giveFertilizer() {
             "Tip 2: Use natural compost to enrich the soil.",
             "Tip 3: Prune your plants regularly to encourage healthy growth.",
             "Tip 4: Provide proper drainage for your potted plants.",
-
+ "Tip 5: Mulch around your plants to retain moisture and suppress weeds.",
+    "Tip 6: Avoid overwatering your plants, as it can lead to root rot.",
+    "Tip 7: Choose the right plants for your climate and growing conditions.",
+    "Tip 8: Rotate the location of your plants each season to prevent soil depletion.",
+    "Tip 9: Remove dead or yellowing leaves from your plants to improve their appearance.",
+    "Tip 10: Check for pests regularly and take action if you notice any infestations.",
+    "Tip 11: Use companion planting to improve the health and productivity of your garden.",
+    "Tip 12: Fertilize your plants with a balanced fertilizer to promote healthy growth.",
+    "Tip 13: Consider using raised beds for better soil drainage and control over the growing environment.",
+    "Tip 14: Keep a gardening journal to track the progress of your plants and learn from your successes and failures.",
+    "Tip 15: Allow some wildflowers or native plants to grow in your garden to attract pollinators and beneficial insects.",
+    "Tip 16: Use natural pest control methods such as neem oil or insecticidal soap.",
+    "Tip 17: Don't forget to deadhead flowers to encourage new blooms.",
+    "Tip 18: Learn about the specific needs and preferences of each plant in your garden.",
+    "Tip 19: Harvest fruits and vegetables when they are fully ripe for the best flavor.", 
+    
         ];
         
 function getRandomPosition() {
+
     const windowHeight = window.innerHeight;
     const windowWidth = window.innerWidth;
-    const containerHeight = document.getElementById('gardeningTipContainer').offsetHeight;
-    const containerWidth = document.getElementById('gardeningTipContainer').offsetWidth;
+    const containerHeight = document.getElementById('leftGardeningTipContainer').offsetHeight;
+    const containerWidth = document.getElementById('leftGardeningTipContainer').offsetWidth;
 
     const randomTop = Math.floor(Math.random() * (windowHeight - containerHeight));
     const randomLeft = Math.floor(Math.random() * (windowWidth - containerWidth));
 
     return { top: randomTop + 'px', left: randomLeft + 'px' };
-}
+} 
 
           function showGardeningTip() {
-            const gardeningTipContainer = document.getElementById('gardeningTipContainer');
-            const gardeningTip = document.getElementById('gardeningTip');
-            const randomTip = gardeningTips[Math.floor(Math.random() * gardeningTips.length)];
+   const leftGardeningTipContainer = document.getElementById('leftGardeningTipContainer');
+    const rightGardeningTipContainer = document.getElementById('rightGardeningTipContainer');
+    const leftGardeningTip = document.getElementById('leftGardeningTip');
+    const rightGardeningTip = document.getElementById('rightGardeningTip');
 
-            gardeningTip.textContent = randomTip;
-            gardeningTipContainer.style.visibility = 'visible';
+    const randomTip = gardeningTips[Math.floor(Math.random() * gardeningTips.length)];
 
-   const randomPosition = getRandomPosition();
-    gardeningTipContainer.style.top = randomPosition.top;
-    gardeningTipContainer.style.left = randomPosition.left;
+    if (Math.random() >= 0.5) {
+        leftGardeningTip.textContent = randomTip;
+        leftGardeningTipContainer.style.visibility = 'visible';
+        rightGardeningTipContainer.style.visibility = 'hidden';
+    } else {
+        rightGardeningTip.textContent = randomTip;
+        rightGardeningTipContainer.style.visibility = 'visible';
+        leftGardeningTipContainer.style.visibility = 'hidden';
+    }
 
-        
-            setTimeout(() => {
-                gardeningTipContainer.style.visibility = 'hidden';
-            }, 5000);
+    const randomPosition = getRandomPosition();
+    leftGardeningTipContainer.style.top = randomPosition.top;
+    leftGardeningTipContainer.style.left = randomPosition.left;
+
+    rightGardeningTipContainer.style.top = randomPosition.top;
+    rightGardeningTipContainer.style.left = randomPosition.left;
+
+    setTimeout(() => {
+        leftGardeningTipContainer.style.visibility = 'hidden';
+        rightGardeningTipContainer.style.visibility = 'hidden';
+    }, 2000);
         }
 
 
@@ -667,10 +743,7 @@ waterButton.addEventListener('click', () => {
 
 }
 
-function call(){
-    startAnimation();
-    waterPlant();
-}
+
 
 
     </script>
