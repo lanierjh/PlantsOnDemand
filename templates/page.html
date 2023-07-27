@@ -40,16 +40,17 @@
            margin: 20px auto; */
         } 
 
+
+
     #plantDead {
             padding: 10px 20px;
-            font-size: 16px;
-            background-color: #007bff;
-            color: #fff;
+            font-size: 30px;
+            color: #333;
+
             cursor: pointer;
             margin: 5px;
             top: 15px;
         }
-
         #health {
             font-size: 24px;
             font-weight: bold;
@@ -133,8 +134,8 @@ transform: translate(-50%, -50%);
 }
 
 #witheredImage {
-    width: 450px; 
-    height: 350px;
+    width: 550px; 
+    height: 450px;
     display: none;
     margin-top: 550px;
 }
@@ -404,6 +405,11 @@ transform: translate(-50%, -50%);
                 document.getElementById('plantDead').hidden = false;
                 document.getElementById('message').hidden = true;
                 document.getElementById('playAgainButton').hidden = false;
+                document.getElementById('plantImage').style.display = 'none';
+                document.getElementById('witheredImage').style.display = 'block';
+                document.getElementById('leftGardeningTipContainer').hidden = true; 
+                document.getElementById('rightGardeningTipContainer').hidden = true; 
+
             } else {
                 document.getElementById('plantDead').hidden = true;
                 document.getElementById('plant').style.backgroundColor = disabled;
@@ -563,14 +569,15 @@ function giveFertilizer() {
             day = 1;
             clearInterval(dayInterval);
             updateDayCounter();
-            dayInterval = setInterval(updateDay, 9000);
+            dayInterval = setInterval(updateDay, 3000);
 
-
-          
             const waterButton = document.getElementById('waterButton');
- document.getElementById('leftGardeningTipContainer').hidden = false; 
+          document.getElementById('leftGardeningTipContainer').hidden = false; 
                 document.getElementById('rightGardeningTipContainer').hidden = false; 
             waterButton.addEventListener('click', startAnimation);
+            witheredImage.style.display = 'none';
+            document.getElementById('plantImage').src = "{{ url_for('static', filename= 'images/5.png') }}";   
+             document.getElementById('plantImage').style.display = 'block';
             document.getElementById('message').hidden = true;
             document.getElementById('waterButton').disabled = false;
             document.getElementById('sunlightButton').disabled = false;
@@ -579,6 +586,7 @@ function giveFertilizer() {
             document.getElementById('sunlightButton').hidden = false;
             document.getElementById('fertilizeButton').hidden = false;
             document.getElementById('waterButton').hidden = false;
+               
           /*  document.getElementById('plant').style.backgroundColor = 'green'; */
             document.getElementById('playAgainButton').hidden = true;
             document.getElementById('plant').style.backgroundColor = disabled; 
