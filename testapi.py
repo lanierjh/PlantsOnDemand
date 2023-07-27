@@ -13,11 +13,7 @@ class PlantLog(db.Model):
     date = db.Column(db.String(250), unique=True, nullable=False)
     notes = db.Column(db.String(1500), unique=True, nullable=False)
     
-new_note = PlantLog(title="hello",
-                    date="1-1-1",
-                    notes="yes")
-    
-db.session.add(new_note)
+
         
     #make sure we don't lose this info we've stored
 db.session.commit()

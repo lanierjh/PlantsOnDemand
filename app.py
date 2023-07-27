@@ -655,7 +655,8 @@ def open_diary(log_id):
     opened_log = PlantLog.query.get_or_404(log_id)
     
     
-    return render_template('/open_note.html', note=opened_log)
+    return render_template('open_note.html', note=opened_log)
+
 
 @app.route('/plant_simulation')
 def plant_simulation():
