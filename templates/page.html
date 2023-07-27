@@ -370,15 +370,11 @@ transform: translate(-50%, -50%);
                  
             </div>
         </div>
-     
+        <div id="gardeningTipContainer" class="tips">
+              <div id="gardeningTip"class="tips"></div>
+        </div>
 
- <div class="tips-container left" id="leftGardeningTipContainer">
-        <p class="tip-text" id="leftGardeningTip"></p>
-    </div>
-    <div class="tips-container right" id="rightGardeningTipContainer">
-        <p class="tip-text" id="rightGardeningTip"></p>
-    </div>
- <a class="top-right" id="nav-links" href="{{ url_for('protected_area_decorated') }}">Home</a> 
+
     </main>
   
     <script>
@@ -457,7 +453,7 @@ function updatePlantImage() {
 
 function updateDay() {
     day++;
-    lastDay = 24;
+    lastDay = 15;
     updateDayCounter();
 
     if (day % 5 === 1) {
